@@ -1,0 +1,46 @@
+\documentclass[aps,prl,reprint,showpacs,floatfix,superscriptaddress, 10pt]{revtex4-2}
+
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}% Align table columns on decimal point
+\usepackage{bm}% bold math
+\usepackage{color}
+\usepackage{epsfig}
+\usepackage{multirow}
+\usepackage{mathrsfs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{epstopdf}
+\usepackage{subfigure}
+\usepackage{autobreak}
+
+\usepackage{titlesec}
+\titleformat*{\section}{\normalfont\large\bfseries\centering\uppercase}
+\titleformat*{\subsection}{\normalfont\large\bfseries\centering}
+
+\usepackage{svg}
+
+\newcommand{\rev}[1]{\textcolor{blue}{#1}}
+
+\begin{document}
+
+\preprint{Preprint}
+
+\title{\Large Research Statement}
+\author{Xuanzhao Gao}
+% \date{}
+
+\maketitle
+
+%----------------------------------------------------------------------------------------
+%	EDUCATION SECTION
+%----------------------------------------------------------------------------------------
+
+\input{overview}
+
+\input{plan_ccm}
+
+\bibliographystyle{plain}
+\bibliography{../ref, ../my}
+
+\end{document}

@@ -1,0 +1,17 @@
+\section{Future Research Plans}
+
+My future research will primarily concentrate on developing rapid and precise algorithms for simulating complex scientific processes, as well as applying these methods to tackle open scientific questions and generate new predictions. Additionally, I will focus on creating efficient implementations of these methods across various platforms, including GPUs and supercomputers. The areas of my interest are outlined as follows:
+
+\textbf{Integral equation methods for solving boundary value problems.}
+I am interested in developing efficient algorithms for addressing systems with complex boundary conditions through the integral equation method. Currently, I am working on a boundary element solver for Poisson's equation involving multiple polarizable spheres. In the future, I aim to explore this field further and create more versatile solvers applicable to a wider range of boundary value problems and various types of partial differential equations (PDEs) by making use of the state-of-the-art methods such as the RCIP method~\cite{helsing2013rcip}.
+
+\textbf{Fast summation methods for long-range interactions.}
+I am keen on developing efficient summation methods for long-range interacting systems, such as those described by Poisson's equation and the Helmholtz equation.
+For example, I am interested in extending the recently introduced dual-space multilevel kernel-splitting (DMK)~\cite{jiang2023dmk, greengard2024new} framework to a variety of long-range interactions and systems with periodic/partially periodic boundary conditions.
+These algorithms will also facilitate the solution of integral equations that arise in systems with complex geometries.
+
+\textbf{Tensor network based methods for quantum many-body systems.}
+% Another research interest of mine is to develop efficient tensor network based methods for solving quantum many-body systems.
+Tensor networks with specialized structures have long served as ansatz for quantum many-body systems~\cite{itensor}, including matrix product states (MPS) and projected entangled-pair states (PEPS). 
+With the advanced tensor network contraction techniques~\cite{roa2024probabilistic}, I am interested in exploring more flexible tensor network structures as ansatz, which may yield more accurate representations of quantum many-body states.
+Additionally, I aim to develop efficient algorithms for evolving these states by integrating them with the Dirac–Frenkel/McLachlan variational principle~\cite{RAAB2000674}, the automatic differentiation techniques~\cite{LIAO2019} and state-of-the-art algorithms for the Schr\"odinger equation~\cite{SCHWENDT2020107048, kaye2023fast}.
