@@ -20,11 +20,20 @@
 #let definition = thmbox("definition", "Definition", inset: (x: 1.2em, top: 1em)).with(numbering: none)
 #let example = thmplain("example", "Example").with(numbering: none)
 #let proof = thmproof("proof", "Proof")
-#let hd(name) = table.cell(text(10pt)[#name], fill: green.lighten(50%))
-#let s(name) = table.cell(text(10pt)[#name])
+#let hd(name) = table.cell(text(12pt)[#name], fill: green.lighten(50%))
+#let s(name) = table.cell(text(12pt)[#name])
 
 #set page(height: auto)
 #set par(justify: true)
+
+#let globalvars = state("t", 0)
+#let timecounter(minutes) = [
+  #globalvars.update(t => t + minutes)
+  #place(dx: 100%, dy: 0%, align(right, text(16pt, red)[#context globalvars.get()min]))
+]
+#let clip(image, top: 0pt, bottom: 0pt, left: 0pt, right: 0pt) = {
+  box(clip: true, image, inset: (top: -top, right: -right, left: -left, bottom: -bottom))
+}
 
 #import "@preview/touying-flow:1.1.0":*
 #show: flow-theme.with(
@@ -41,7 +50,7 @@
 
   config-info(
     title: [Numerical Methods for Modeling and Simulation],
-    subtitle: [Fast Summation Algorithms and Tensor Network Methods],
+    subtitle: [Tensor Network Methods and Fast Summation Algorithms],
     author: text(23pt)[Xuanzhao Gao],
     institution: text(20pt)[Hong Kong University of Science and Technology],
     date: text(23pt)[2024-12-26],
@@ -53,230 +62,9 @@
 
 #title-slide()
 
-// == About Me
-
-// My name is Xuanzhao Gao, a fourth year PhD student at HKUST, supervised by Prof. Zecheng Gan.
-
-= Fast Summation Algorithms
-
-== Quasi-2D Systems and Long Range Coulomb Interaction
-
-=== Molecular dynamics simulation
-
-Molecular dynamics simulation is a widely used method to study the motion of atoms and molecules.
-
-#align(center,
-  grid(columns: 3, 
-    image("figs/MD.png", width: 400pt),
-    h(50pt),
-    image("figs/MD_workflow.png", width: 270pt),
-  )
-)
-
-#pagebreak()
-
-=== Doubly periodic systems
-
-Quasi-2D systems are at the macroscopic scale in $x y$, but microscopic in $z$, so that are always modeled as doubly periodic in simulations.
-Q2D systems are widely exist in nature and engineering, for example, cell membranes and electrolyte near surfaces.
-
-#figure(
-  image("figs/Q2D.png", width: 600pt),
-  caption: [Illustration of a doubly periodic system.],
-)
-
-#pagebreak()
-=== Coulomb interaction
-
-Coulomb interaction plays a key role in nature, leading to effect such as ion transport and self-assembly.
-
-#figure(
-  image("figs/self-assembly.png", width: 450pt),
-  caption: [Self-assembly of nanoparticles due to Coulomb interaction#footnote(text(12pt)[Barros, Kipton, and Erik Luijten. Phys. Rev. Lett. 113, 017801],).
-],)
-
-However, the Coulomb interaction decays as $r^(-1)$ in 3D, so that is long ranged and singular at $r=0$, which make such simulation computationally expensive.
-// Complexity of a direct sum of the Coulomb interaction in doubly periodic systems is about $O(N^2 epsilon^(-1/3))$.
-
-#pagebreak()
-
-// === Ewald summation
-
-// A traditional method to deal with the long range Coulomb interaction is Ewald summation, where the Coulomb kernel is split into short-range and long-range parts:
-// $
-//   1 / r = (#text[erfc($alpha r$)]) / r + (#text[erf($alpha r$)]) / r
-// $
-// where $#text[erfc($x$)]$ is the complementary error function and $#text[erf($x$)]$ is the error function.
-
-// #align(center,
-//   image("figs/erfc.png", width: 350pt),
-// )
-
-
-// #pagebreak()
-
-// === Ewald summation
-
-// The short-range part then is truncated in real space, and the long-range part is truncated in Fourier space.
-
-// Due to the periodicity in $x$ and $y$, the long-range interaction energy can be given by a 
-// $
-//   E_("long") = 1/(L_x L_y) sum_(i, j) q_i q_j sum_(k_x, k_y) integral_(- infinity)^(infinity) e^(-i arrow(k) dot arrow(r)_(i j))/(k^2) e^(-k^2/(4 alpha^2)) d k_z - alpha / sqrt(pi) sum_i q_i^2
-// $
-// where the infinite integral can be calculated analytically:
-// $
-//   h / pi integral_(- infinity)^(infinity) e^(-i k_z z_(i j))/(k^2) e^(-k_z^2/(4 alpha^2)) d k_z = underbrace(e^(h abs(z_(i j)))"erfc"(h/(2 alpha) + alpha abs(z_(i j))), xi^+(z_(i j))) + underbrace(e^(-h abs(z_(i j)))"erfc"(h/(2 alpha) - alpha abs(z_(i j))), xi^-(z_(i j)))
-// $
-// where $h = sqrt(k_x^2 + k_y^2)$. This function decay exponentially fast in the reciprocal space.
-
-// The resulting algorithm is called Ewald2D#footnote(text(12pt)[D. Parry, Surf. Sci. 49 (2) (1975) 433–440.],), with a complexity of $O(N^2 log epsilon)$.
-// // , which prohibits the simulation of large systems.
-
-=== Previous methods
-
-
-
-
-
-// == Sum-of-Exponential Ewald2D Method
-
-// === The SOE approximation
-
-// Inspired by the fast Gaussian transform via sum-of-exponential (SOE) approximation#footnote(text(12pt)[S. Jiang, L. Greengard, Commun. Comput. Phys. 31 (1) (2022) 1–26],), we propose a sum-of-exponential Ewald2D method#footnote(text(12pt)[Z. Gan, X. Gao, J. Liang, and Z. Xu. arXiv preprint arXiv:2405.06333, 2024; also see #link("https://github.com/HPMolSim/SoEwald2D.jl")],) utilizing VPMR#footnote(text(12pt)[Z. Gao, J. Liang, Z. Xu, J. Sci. Comput. 93 (2) (2022) 40],) method.
-
-// The Guassian kernel is approximated by a sum of exponential functions as follows:
-// $
-//   e^(- alpha^2 t^2) approx sum_(l = 1)^M  w_l e^(- s_l alpha abs(t))
-// $
-// where $w_l$ and $s_l$ are complex parameters of the SOE approximation, and the following error bound is satisfied:
-// $
-//   abs( e^(- alpha^2 t^2) - sum_(l = 1)^M  w_l e^(- s_l alpha abs(t)) ) < epsilon.
-// $
-// In VPMR, $M = 4$, $8$ and $16$ gives the error bound $epsilon = 10^(-4)$, $10^(-8)$ and $10^(-14)$, respectively.
-
-// #pagebreak()
-
-// === Approximation of the Ewald2D kernel
-
-// In Ewald2D summation, we observed the following identity:
-// $
-//   xi^+ (z) = e^( h abs(z))"erfc"(h/(2 alpha) + alpha abs(z)) & = (2 alpha) / sqrt(pi) e^(-h^2/(4 alpha^2)) e^(h abs(z)) integral_(abs(z))^(infinity) e^(-alpha^2 t^2 - h t) d t\
-// $
-// and the SOE approximation is applied to get:
-// $
-//    xi^+ (z) approx (2 alpha) / sqrt(pi) e^(-h^2/(4 alpha^2)) e^(h abs(z)) integral_(abs(z))^(infinity) sum_(l = 1)^M  w_l e^(- s_l alpha abs(t)  - h t) d t = (2 alpha) / sqrt(pi) e^(-h^2/(4 alpha^2)) sum_(l = 1)^M  w_l e^(- s_l alpha abs(z)) / (alpha s_l + h)
-// $
-// For $xi^-(z)$, the same approximation is applied.
-
-// Now the double summation over $i$ and $j$ in energy is approximated by
-// $
-//   sum_(i, j) q_i q_j xi (z_(i j)) approx sum_(l = 1)^M C_l sum_(i, j) q_i q_j e^(- s_l alpha abs(z_(i j)))
-// $
-// where $C_l$ is a constant irrelevant to $i$ and $j$.
-
-// #pagebreak()
-
-// === Summing up the exponentials via sorting
-
-// The double summation can be simplified as 
-// $
-//   S = sum_(i, j) q_i q_j e^(- abs(z_i - z_j))
-// $
-// which still takes $O(N^2)$ operations due to the absolute value.
-
-// For further acceleration, we reorder the indices via sorting (at most $O(N log N)$ operations):
-// $
-//   z_1 < z_2 < ... < z_N
-// $
-// so that the absolute value can be removed: 
-// $
-//   S = sum_(i = 1)^N q_i e^(-z_i) underbrace(sum_(j = 1)^i q_j e^(z_j), A_i) = sum_(i = 1)^N q_i e^(-z_i) A_i
-// $
-// where the array $A$ can be computed iteratively in $O(N)$ operations, then calculating $S$ takes another $O(N)$ operations.
-
-// #pagebreak()
-
-// === Complexity of the SOEwald2D method
-
-// Utilizing the SOE approximation, the double summation can be calculated in $O(N)$ operations.
-// Calculation of the energy can be simplified as
-// $
-//   sum_(k_x, k_y) e^(-h^2 / (4 alpha^2)) sum_(i, j) S(k_x, k_y, r_i, r_j) = underbrace(sum_(k_x, k_y), O(N^0.4)) e^(-h^2 / (4 alpha^2)) underbrace(f(k_x, k_y), O(N))
-// $
-// However, a summation in the reciprocal space is still required, and the resulting total complexity is $O(N^(1.4))$ since number of the Fourier mode to be summed is of $O(N^(0.4))$.
-
-// #pagebreak()
-
-// === Random batch sampling
-
-// To further reduce the complexity, we use the the random batch sampling technique#footnote(text(12pt)[S. Jin, L. Li, Z. Xu, Y. Zhao, SIAM J. Sci. Comput. 43 (4) (2021) B937–B960.],), where a importance sampling is applied:
-// $
-//   sum_(k_x, k_y) e^(-h^2 / (4 alpha^2)) f(k_x, k_y) approx H / P sum_((k_x, k_y) in cal(K)_P) f(k_x, k_y)
-// $
-// where $P$ Fourier modes are selected using the Gaussian as distribution, $H$ is the summation of Guassians.
-
-// It has been shown that for a system with fixed density, $P ~ O(1)$ is sufficient to achieve the correct equilibrium state, and gives an accurate ensemble average.
-
-// The resulting algorithm is called RBSE2D, with a complexity of $O(N)$.
-
-
-// #pagebreak()
-
-// === Numerical Results
-
-// The accuracy of the SOEwald2D method is determined by the error bound of the SOE approximation, and coverage exponentially fast as the Ewald2D method.
-
-// #figure(
-//   image("figs/soewald2d_error.png", width: 600pt),
-//   caption: [Error of the SOEwald2D method (a) with different number of term $M$ used in the SOE approximation (b) with different system sizes ($L_z$ is fixed).],
-// )
-
-// #pagebreak()
-
-// === Numerical Results
-
-// We use the RBSE2D method to simulate a typical Q2D electrolyte system as shown below:
-
-// #figure(
-//   image("figs/soewald2d_md.png", width: 500pt),
-//   caption: [The charge density of the Q2D electrolyte system in $z$ direction with different $P$, inset shows the relative error of the average energy.],
-// )
-
-// #pagebreak()
-
-// === Numerical Results
-
-// Time complexity of the method is verified as below:
-
-// #figure(
-//   image("figs/soewald2d_complexity.png", width: 500pt),
-//   caption: [Complexity of the Ewald2D method, SOEwald2D method and RBSE2D method.],
-// )
-
-// #pagebreak()
-
-// === Summary
-
-// The SoEwald2D utilized the SOE approximation and spirit of the FGT to accelerate the Ewald2D method.
-
-// It has the following advantages:
-// - Reducing the complexity from $O(N^2)$ to $O(N^1.4)$ with a controlled error bound.
-// - With the random batch sampling technique, the complexity can be further reduced to $O(N)$.
-// - Not sensitive to the aspect ratio of the system.
-
-// However, it also has some disadvantages:
-// - A sorting step is required, which is not efficient for parallel computing.
-// - Importance sampling is necessary to achieve linear complexity, which may not be efficient for cases requiring exact results.
-
-== Fast Spectral Sum-of-Gaussian Method
-
-=== Sum-of-Gaussian approximation of Coulomb kernel
-
-
-
 = Tensor Network Based Algorithms
 
-== Tensor Networks and Their Contraction Order
+== Tensor Networks and Exact Contraction
 
 === Tensor Networks
 
@@ -489,7 +277,7 @@ table(
 )
 )
 
-In the following, we will show how to perform these tasks via the modern tensor network techniques in our work#footnote(text(12pt)[M. Roa-Villescas, *X. Gao*, S. Stuijk, H. Corporaal, and J.-G. Liu, Phys. Rev. Research 6, 033261 (2024). Also see #link("https://github.com/TensorBFS/TensorInference.jl")],).
+In the following, we will show how to perform these tasks via the modern tensor network techniques in our work#footnote(text(12pt)[M. Roa-Villescas, *X.-Z. Gao*, S. Stuijk, H. Corporaal, and J.-G. Liu, Phys. Rev. Research 6, 033261 (2024). Also see #link("https://github.com/TensorBFS/TensorInference.jl")],).
 
 #pagebreak()
 
@@ -573,23 +361,26 @@ By replacing the matrix multiplication in the contraction with the GPU kernels, 
 
 === Summary
 
-We applied the modern tensor network techniques to solve the probabilistic inference tasks.
+We applied the modern tensor network techniques to solve the probabilistic inference tasks, including contraction order optimization, automatic differentiation, generic tensor network, and GPU acceleration.
+It is shown that with these techniques, a exponential speedup is achieved against the traditional solvers.
 
 Advantages:
-- Powerful contraction order optimization tools
-- Automatic differentiation techniques
-- Easily accelerated by GPU
+- powerful contraction order optimization tools
+- automatic differentiation techniques
+- easily accelerated by GPU
 
 Disadvantages:
-- Exact inference can not handle ultra-large scale problems
-- The contraction order optimization only uses the structural information
+- exact inference can not handle ultra-large scale problems
+- the contraction order optimization only uses the structural information
 
 
 == Automatic Discovery of the Optimal Branching Rules
 
 === Failure of tensor network method
 
-Maximum independent set (MIS) problem: given a graph, find the largest subset of vertices such that no two vertices are connected by an edge. Can be solved by tropical TN.
+Similar techniques are alos used in combinatorial optimization problems#footnote(text(12pt)[*X.-Z. Gao*, X.-F. Li, J.-G. Liu, arXiv:, (2024), also see #link("https://github.com/QuEraComputing/GenericTensorNetworks.jl")],) #footnote(text(12pt)[J.-G. Liu, X. Gao, M. Cain, M. D. Lukin, and S.-T. Wang, SIAM J. Sci. Comput., 45 (2023), pp. A1239–A1270],), such as the maximum independent set (MIS) problem, which can be solved by tropical TN.
+
+MIS problem: given a graph, find the largest subset of vertices such that no two vertices are connected by an edge.
 
 A simple problem: MIS on complete graph.
 
@@ -709,7 +500,7 @@ Can we combine the branching algorithm with the tensor network method?
 
 === The optimal branching algorithm
 
-We use the tensor network to extract the local information#footnote(text(12pt)[J.-G. Liu, J. Wurtz, M.-T. Nguyen, M. D. Lukin, H. Pichler, and S.-T. Wang, unpublished, (2024).],) #footnote(text(12pt)[*X. Gao*., Y.-J. Wang, P. Zhang, J.-G. Liu, http://arxiv.org/abs/2412.07685, (2024), also see #link("https://github.com/ArrogantGao/OptimalBranching.jl")],), and then automatically search the optimal branching rules.
+We use the tensor network to extract the local information#footnote(text(12pt)[*X.-Z. Gao*., Y.-J. Wang, P. Zhang, J.-G. Liu, http://arxiv.org/abs/2412.07685, (2024), also see #link("https://github.com/ArrogantGao/OptimalBranching.jl")],), and then automatically search the optimal branching rules.
 
 #align(center, image("figs/ob_rules.png", width: 600pt))
 
@@ -803,104 +594,233 @@ A bottle neck case has been reported in Xiao's work#footnote(text(12pt)[M. Xiao 
   caption: [Number of branches generated by the branching algorithms on 1000 random graphs of different sizes.],
 )
 
-// #pagebreak()
-
-// === Potential applications of optimal branching
-
-// The optimal branching algorithm can be applied to contract the sparse tensor networks.
-// Assume that $T$ is a sparse tensor, the non-zeros values are listed as below:
-
-// #align(center,
-// grid(columns: 3,
-//   canvas(length: 40pt, {
-//     import draw: *
-//     let T = (0, 0)
-//     let A = (1, 0)
-//     let B = (0, 1)
-//     let C = (-1, 0)
-//   let D = (0, -1)
-//   let locs = (T, A, B, C, D)
-//   let mid = (A, B, C, D).map(v => (v.at(0) * 0.5, v.at(1) * 0.5))
-//   let e = ((0, 1), (0, 2), (0, 3), (0, 4))
-//   let c = ((0, $T_(1 2 3 4)$), (1, $A_(1 *)$), (2, $B_(2 *)$), (3, $C_(3 *)$), (4, $D_(4 *)$))
-//   let s = 2
-//   show-graph-black(locs.map(v => (v.at(0) * (s + 1), v.at(1) * (s + 1))), e, radius:0.0)
-//   show-graph-black(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, radius:0.5)
-//   show-graph-content(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, c, radius:0.5, fontsize: 16pt)
-//   for (i, v) in mid.map(v => (v.at(0) * (s), v.at(1) * (s))).enumerate() {
-//     circle(v, radius:0.3, fill:white, stroke:none)
-//     content(v, text(15pt, black)[#(i + 1)])
-//   }
-// }),
-// h(100pt),
-// align(center + horizon,
-// canvas({
-//   import draw: *
-//   content((0,0), text(20pt, black)[
-//     #table(
-//     columns: (auto, auto, auto, auto, auto),
-//     inset: 10pt,
-//     align: horizon,
-//     table.header(
-//       [1], [2], [3], [4], [value],
-//       ),
-//       [1], [1], [0], [1], [0.1],
-//       [1], [1], [1], [0], [0.2],
-//       [1], [1], [0], [0], [0.3],
-//       [1], [0], [0], [0], [0.4],
-//       [0], [1], [0], [0], [0.5]
-//     )
-//   ])
-// })),
-// )
-// )
-
-// This is exactly a branching problem, one can use the optimal branching algorithm to find the optimal way.
-
 #pagebreak()
 === Summary
 
-We proposed a new method to automatically discover the optimal branching rules for the branching algorithm combining the tensor network method and the branching algorithm.
+A new method to automatically discover the optimal branching rules for the branching algorithm is proposed, by combining the tensor network method and the branching algorithm.
+With this method, we achieved an average branching factor of $O(1.0441)$ on random three-regular graphs, which outperforms the SOTA.
 
 Advantages:
-- Generate the branching rules automatically without human effort
-- Better scaling than the traditional branching algorithm
+- generate the branching rules automatically without human effort
+- better scaling than the traditional branching algorithm
 
 Disadvantages:
-- A better vertices selection strategy is needed
-- Solving the rule can be computationally expensive
+- vertices selection strategy is needed, the branching rule is not globally optimal
+- solving the rule can be computationally expensive
+
+= Fast Summation Algorithms
+
+== Quasi-2D Systems and Long Range Coulomb Interaction
+
+=== Molecular dynamics simulation
+
+Molecular dynamics simulation is a widely used method to study the motion of atoms and molecules.
+
+#align(center,
+  grid(columns: 3, 
+    image("figs/MD.png", width: 400pt),
+    h(50pt),
+    image("figs/MD_workflow.png", width: 270pt),
+  )
+)
+
+#pagebreak()
+
+=== Doubly periodic systems
+
+Quasi-2D systems are at the macroscopic scale in $x y$, but microscopic in $z$, so that are always modeled as doubly periodic in simulations.
+Q2D systems are widely exist in nature and engineering, for example, cell membranes and electrolyte near surfaces.
+
+#figure(
+  image("figs/Q2D.png", width: 600pt),
+  caption: [Illustration of a doubly periodic system.],
+)
+
+#pagebreak()
+=== Coulomb interaction
+
+Coulomb interaction plays a key role in nature, leading to effect such as ion transport and self-assembly.
+
+#figure(
+  image("figs/self-assembly.png", width: 450pt),
+  caption: [Self-assembly of nanoparticles due to Coulomb interaction#footnote(text(12pt)[Barros, Kipton, and Erik Luijten. Phys. Rev. Lett. 113, 017801],).
+],)
+
+However, the Coulomb interaction decays as $r^(-1)$ in 3D, so that is long ranged and singular at $r=0$, which make such simulation computationally expensive.
+// Complexity of a direct sum of the Coulomb interaction in doubly periodic systems is about $O(N^2 epsilon^(-1/3))$.
+
+#pagebreak()
+
+=== Algorithms for Q2D charged systems
+
+Methods have been developed to accelerate the Coulomb interaction in Q2D systems.
+
+The very first method is the Ewald2D#footnote(text(12pt)[David E. Parry, Surf. Sci. 49 (1975), no. 2, 433–440.],) method based on the Ewald splitting of the Coulomb kernel. It is accurate but with $O(N^2)$ complexity.
+
+To reduce the complexity, most methods rely on the following two strategies:
+
+- Fourier spectral methods#footnote(text(12pt)[Ondrej Maxian, Rau´l P. Pel´aez, Leslie Greengard, and Aleksandar Donev, J. Chem. Phys. 154 (2021), no. 20, 204107.],) #footnote(text(12pt)[Franziska Nestler, Michael Pippig, and Daniel Potts, J. Comput. Phys. 285 (2015), 280–315.],) #footnote(text(12pt)[Davoud Saffar Shamshirgar, Joar Bagge, and Anna-Karin Tornberg, J. Chem. Phys. 154 (2021), no. 16, 164109.],): based on Ewald splitting and fast Fourier transform (FFT), with $O(N log N)$ complexity.
+
+- Fast multipole methods#footnote(text(12pt)[Jiuyang Liang, Jiaxing Yuan, Erik Luijten, and Zhenli Xu, J. Chem. Phys. 152 (2020), no. 13, 134109.],) #footnote(text(12pt)[Ruqi Pei, Travis Askham, Leslie Greengard, and Shidong Jiang, J. Comp. Phys. 474 (2023), 111792.],) #footnote(text(12pt)[Wen Yan and Michael Shelley, J. Comput. Phys. 355 (2018), 214–232.],): based on the multipole expansion of the Coulomb kernel, with $O(N)$ complexity.
+
+#pagebreak()
+
+=== Algorithms for Q2D charged systems
+
+For doubly periodic systems, one major challenge is the large prefactor in $O(N)$ or $O(N log N)$ compared to 3D-PBC solvers, especially when the system is strongly confined in the $z$ direction, i.e., $L_z << L_x, L_y$.
+
+For the FFT based methods, the singularity introduced by the Laplacian in the Fourier integral along the free direction leads to huge additional zero-padding#footnote(text(12pt)[Ondrej Maxian, Rau´l P. Pel´aez, Leslie Greengard, and Aleksandar Donev, J. Chem. Phys. 154 (2021), no. 20, 204107.],).
+
+For the FMM based methods, more near field contributions is included#footnote(text(12pt)[Wen Yan and Michael Shelley, J. Comput. Phys. 355 (2018), 214–232.],).
+
+== Fast Spectral Sum-of-Gaussian Method
+
+=== Sum-of-Gaussian approximation of Coulomb kernel
+
+A sum-of-Gaussian (SoG) approximation of the Coulomb kernel is utilized in our method#footnote(text(12pt)[*X.-Z. Gao*, S. Jiang, J. Liang, Z. Xu, Q. Zhou, http://arxiv.org/abs/2412.04595, (2024). Also see #link("https://github.com/HPMolSim/FastSpecSoG.jl")],), where
+$
+  1 / r approx (2 log b) / sqrt(2 pi sigma^2) sum_(l = - infinity)^(infinity) 1 / (b^l) e^(- r^2 / (sqrt(2) b^l sigma)^2), " with" cal(E)_r < 2 sqrt(2) e^(- pi^2 / (2 log b))
+$
+
+Then we can split the potential into three parts:
+$
+  1 / r approx underbrace(( 1 / r - sum_(l = 0)^M w_l e^(- r^2 / s_l^2)) bb(1)_(r < r_c), "near-field")+ underbrace(sum_(l = 0)^m w_l e^(- r^2 / s_l^2), "mid-range") + underbrace(sum_(l = m + 1)^M w_l e^(- r^2 / s_l^2), "long-range")
+$
+where $s_l$ and $w_l$ are the nodes and weights of the SOG approximation#footnote(text(12pt)[Gregory Beylkin and Lucas Monz´on, Appl. Comput. Harmon. Anal. 28 (2010), no. 2, 131–149.],).
+The nodes $s_l$ are arranged in monotone increasing order with $s_M >> L_x, L_y$, and $r_c$ is the cutoff radius to balance the near-field and far-field contributions.
+
+#pagebreak()
+
+=== Range splitting for far-field potential
+
+How to determine the turning point $m$? 
+
+We select $m$ so that $s_m < eta L_z < s_(m+1)$, where $eta$ is $O(1)$ constant.
+
+\
+
+// #align(center,
+  #grid(columns: 3,
+    image("figs/farfield.svg", width: 300pt),
+    h(50pt),text(20pt)[
+      The mid range part decays rapidly in $z$ direction, so that the mid range potential can be accurately periodicized in the z-direction and effectively handled using a pure Fourier spectral solver with less zero padding.
+      
+      The long range part is extremely smooth in $[-L_z / 2, L_z / 2]$, and can be solved by a Fourier-Chebyshev method with $O(1)$ number of Chebyshev points.
+    ]
+  )
+
+
+#pagebreak()
+=== Numerical results
+
+#figure(
+  image("figs/sog_benchmark.png", width: 400pt),
+  caption: [Total relative error is shown for (a) cubic systems and (b) strongly confined systems with fixed height $L_z = 0.3$, plotted against the number of particles $N$. Time costs are shown in (c) and (d), which shows a linear scaling with $N$.],
+)
+
+#pagebreak()
+
+=== Summary
+
+A fast and accurate solver for Q2D charged systems is developed based on the sum-of-Gaussian approximation of the Coulomb kernel.
+The Coulomb kernel is splitted into three parts:
+- near field terms: solved by real space truncation
+- mid-range terms: solved by the Fourier spectral method with less zero padding
+- long-range terms: solved by the Fourier-Chebyshev method with $O(1)$ number of Chebyshev points
+
+It has the following advantages:
+- spectrally accurate with rigorous error analysis
+- not sensitive to the aspect ratio of the system
+- smoothness and separability of the Gaussian removes the need of kernel truncation in the free direction
+- does not require any upsampling in the gridding step
+- all calculations are carried out in the fundamental cell itself
+
+Currently, the major shortcoming of this method is its non-adaptive nature, and has a complexity of $O(N log N)$ rather than $O(N)$.
 
 = Future Research Plans
 
 == Fast Algorithms Based on the DMK Framework
 
-Fast algorithms on doubly periodic Coulomb systems based on the DMK framework.
+The recently introduced dual-space multilevel kernel-splitting (DMK)#footnote(text(12pt)[S. Jiang, L. Greengard, http://arxiv.org/abs/2308.00292, (2023)],) method offers a powerful framework for solving a variety of long-range interactions and systems with periodic/partially periodic boundary conditions, which can be adaptive and with linear complexity.
 
-== Boundary Integral Equations
+#align(center, image("figs/dmk.png", width: 550pt))
 
-For sharp boundaries.
+== Tensor Network for Quantum Many-Body Systems
 
-== Quantum Many-Body Systems
+Tensor networks with specialized structures have long served as ansatz for quantum many-body systems, including matrix product states (MPS) and projected entangled-pair states (PEPS). 
 
-Using general tensor networks as ansatz to represent quantum many-body systems.
+With the advanced tensor network contraction techniques, I am interested in exploring more flexible tensor network structures as ansatz, which may yield more accurate representations of quantum many-body states.
 
-// = Summary
+Additionally, I aim to develop efficient algorithms for evolving these states by integrating them with the Dirac–Frenkel/McLachlan variational principle#footnote(text(12pt)[A. Raab. Chem. Phys. Lett., 319(5):674–678, 2000.],), the automatic differentiation and proper pre-conditioning#footnote(text(12pt)[M. Ganahl, J. Rincón, G. Vidal. Phys. Rev. Lett. 118, 220402 (2017).],).
 
-// #pagebreak()
+== Sparse Tensor Networks Contraction via Optimal Branching
 
-// A summary of the talk.
+The optimal branching algorithm can be applied to contract the sparse tensor networks.
+Assume that $T$ is a sparse tensor, the non-zeros values are listed as below:
+
+#align(center,
+grid(columns: 3,
+  canvas(length: 35pt, {
+    import draw: *
+    let T = (0, 0)
+    let A = (1, 0)
+    let B = (0, 1)
+    let C = (-1, 0)
+  let D = (0, -1)
+  let locs = (T, A, B, C, D)
+  let mid = (A, B, C, D).map(v => (v.at(0) * 0.5, v.at(1) * 0.5))
+  let e = ((0, 1), (0, 2), (0, 3), (0, 4))
+  let c = ((0, $T_(i j k l)$), (1, $A_(i *)$), (2, $B_(j *)$), (3, $C_(k *)$), (4, $D_(l *)$))
+  let s = 2
+  let indices = ($i$, $j$, $k$, $l$)
+  show-graph-black(locs.map(v => (v.at(0) * (s + 0.8), v.at(1) * (s + 0.8))), e, radius:0.0)
+  show-graph-black(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, radius:0.5)
+  show-graph-content(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, c, radius:0.5, fontsize: 16pt)
+  for (i, v) in mid.map(v => (v.at(0) * (s), v.at(1) * (s))).enumerate() {
+    circle(v, radius:0.3, fill:white, stroke:none)
+    content(v, text(15pt, black)[#indices.at(i)])
+  }
+}),
+h(100pt),
+align(center + horizon,
+canvas({
+  import draw: *
+  content((0,0), text(20pt, black)[
+    #table(
+    columns: (auto, auto, auto, auto, auto),
+    inset: 10pt,
+    align: horizon,
+    table.header(
+      [i], [j], [k], [l], [value],
+      ),
+      [1], [1], [0], [1], [0.1],
+      [1], [1], [1], [0], [0.2],
+      [1], [1], [0], [0], [0.3],
+      [1], [0], [0], [0], [0.4],
+      [0], [1], [0], [0], [0.5]
+    )
+  ])
+})),
+)
+)
+
+Such a contraction can be viewed as a branching problem, one can use the optimal branching algorithm to find the optimal way. 
+
+Such sparsity is common in many problems, including probabilistic inference, combinatorial optimization, and quantum circuit simulations#footnote(text(12pt)[I.L. Markov, Y. Shi, SIAM J. Comput. 38, 963–981 (2008).],).
 
 = Acknowledgements
 
 #pagebreak()
 
+#let figsize = 130pt
+
 #align(center,
 grid(columns: 5, 
-  grid(rows : 3, image("photos/zechenggan.jpeg", width : 150pt), "" ,  text[Prof. Zecheng Gan \ HKUST(GZ)]),
+  grid(rows : 3, image("photos/zechenggan.jpeg", width : figsize), "" ,  text[Prof. Zecheng Gan \ HKUST(GZ)]),
   h(50pt), 
-  grid(rows : 3, image("photos/zhenlixu.jpg", width : 150pt), "" ,  text[Prof. Zhenli Xu \ SJTU]),
+  grid(rows : 3, image("photos/zhenlixu.jpg", width : figsize), "" ,  text[Prof. Zhenli Xu \ SJTU]),
   h(50pt), 
-  grid(rows : 3, image("photos/shidongjiang.jpeg", width : 150pt), "" ,  text[Prof. Shidong Jiang \ Flatiron Institute]),
+  grid(rows : 3, image("photos/shidongjiang.jpeg", width : figsize), "" ,  text[Prof. Shidong Jiang \ Flatiron Institute]),
   )
 )
 
@@ -910,21 +830,17 @@ grid(columns: 5,
 
 #align(center,
 grid(columns: 3, 
-  grid(rows : 3, image("photos/jinguoliu.jpeg", width : 150pt), "" ,  text[Prof. Jinguo Liu, \ HKUST(GZ)]),
+  grid(rows : 3, image("photos/jinguoliu.jpeg", width : figsize), "" ,  text[Prof. Jinguo Liu, \ HKUST(GZ)]),
   h(60pt), 
-  grid(rows : 3, image("photos/panzhang.jpeg", width : 150pt), "" ,  text[Prof. Pan Zhang, \ ITP, CAS]),
+  grid(rows : 3, image("photos/panzhang.jpeg", width : figsize), "" ,  text[Prof. Pan Zhang, \ ITP, CAS]),
   )
 )
 
+Also thank Jiuyang Liang (SJTU & FI), Qi Zhou (SJTU), Martin Roa-Villescas (TUE) and Yijia Wang (ITP, CAS) for collaboration.
+
 = Appendix
 
-== Details of Fast Summation Algorithms
-
 == Details of Tensor Network Based Algorithms
-
-=== Tensor Network AD
-
-#pagebreak()
 
 === Tropical Tensor Network
 
@@ -975,7 +891,55 @@ In each gradient computation, there exists precisely one non-zero element, repre
 
 #pagebreak()
 
-=== Iteratively solve the set covering problem
+=== Tensor Network for Maximum Independent Set Problem
+
+A tropical TN can be used to solve the MIS problem, a simple example is shown below:
+
+#align(center, canvas(length:40pt, {
+  import draw: *
+  // petersen graph
+  let vertices1 = ((0, 0), (5, 0), (5, 5), (0, 5))
+  let edges = ((0, 1), (1, 2), (2, 3), (3, 0))
+  show-graph((vertices1).map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1)) + 1.24)), edges, radius:0.1)
+  // content((2.5, -1.5), text(16pt)[(a)])
+
+  content((4, 2.5), text(30pt)[$arrow$])
+
+  set-origin((6, 1.25))
+  show-graph((vertices1).map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1)))), edges, radius:0.0)
+
+  let vertices3 = ((0, 0), (5, 0), (5, 5), (0, 5), (-1.5, -1.5), (6.5, -1.5), (6.5, 6.5), (-1.5, 6.5))
+  let edges3 = ((0, 4), (1, 5), (2, 6), (3, 7))
+  show-graph((vertices3).map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1)))), edges3, radius:0.0)
+  // 
+  for (i, v) in (vertices1.map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1))))).enumerate() {
+    circle(v, radius:0.3, fill:white, stroke:none)
+    content(v, text(20pt, black)[#(4 - i)])
+  }
+
+  let vertices2 = ((2.5, 0), (5, 2.5), (2.5, 5), (0, 2.5), (-1.5, -1.5), (6.5, -1.5), (6.5, 6.5), (-1.5, 6.5))
+  let edges2 = ()
+  show-graph-content((vertices2).map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1)))), edges2, ((0, "B"), (1, "B"), (2, "B"), (3, "B"), (4, "W"), (5, "W"), (6, "W"), (7, "W")), radius:0.4, fontsize: 20pt)
+
+  // content((1.25, -2.75), text(16pt)[(b)])
+}))
+
+with 
+$
+  B = mat(
+    bb(1), bb(1);
+    bb(1), bb(0);
+  ), " and " 
+  W = mat(
+    bb(0);
+    bb(1);
+  )
+$
+where $bb(1)$ and $bb(0)$ are identity element of tropical multiplication and addition, corresponding to $0$ (add) and $- infinity$ (max) of normal algebra, respectively.
+
+#pagebreak()
+
+=== Solving the set covering problem via Linear Integer Programming
 
 In the original set covering problem, the function to be optimized is not linear. We solve it iteratively.
 
@@ -991,3 +955,276 @@ cases(
 "Weights:" i arrow.r.bar gamma^(-Delta rho(c_i))
 )
 $
+After each iteration, the branching complexity $gamma$ is updated, coverge in a few iterations.
+
+#pagebreak()
+
+=== The branching algorithm used in benchmark
+
+#let s(name) = table.cell(align(center + horizon, text(16pt)[#name]))
+#align(center,
+table(
+    columns: (150pt, auto, auto, auto),
+    table.header(
+    bdiagbox(s[Reduction], s[Branching], width:150pt), s[Optimal Branching \ (this work)], s[Xiao 2013], s[Akiba 2015],
+    ),
+    s[d1/d2 reduction], s[ob], s[-], s[akiba2015],
+    s[d1/d2 reduction\ Xiao's rules], s[ob+xiao], s[xiao2013], s[-],
+    s[d1/d2 reduction\ Xiao's rules\ packing rule], s[-], s[-], s[akiba2015+xiao&packing],
+))
+
+// === Ewald summation
+
+// A traditional method to deal with the long range Coulomb interaction is Ewald summation, where the Coulomb kernel is split into short-range and long-range parts:
+// $
+//   1 / r = (#text[erfc($alpha r$)]) / r + (#text[erf($alpha r$)]) / r
+// $
+// where $#text[erfc($x$)]$ is the complementary error function and $#text[erf($x$)]$ is the error function.
+
+// #align(center,
+//   image("figs/erfc.png", width: 350pt),
+// )
+
+
+// #pagebreak()
+
+// === Ewald summation
+
+// The short-range part then is truncated in real space, and the long-range part is truncated in Fourier space.
+
+// Due to the periodicity in $x$ and $y$, the long-range interaction energy can be given by a 
+// $
+//   E_("long") = 1/(L_x L_y) sum_(i, j) q_i q_j sum_(k_x, k_y) integral_(- infinity)^(infinity) e^(-i arrow(k) dot arrow(r)_(i j))/(k^2) e^(-k^2/(4 alpha^2)) d k_z - alpha / sqrt(pi) sum_i q_i^2
+// $
+// where the infinite integral can be calculated analytically:
+// $
+//   h / pi integral_(- infinity)^(infinity) e^(-i k_z z_(i j))/(k^2) e^(-k_z^2/(4 alpha^2)) d k_z = underbrace(e^(h abs(z_(i j)))"erfc"(h/(2 alpha) + alpha abs(z_(i j))), xi^+(z_(i j))) + underbrace(e^(-h abs(z_(i j)))"erfc"(h/(2 alpha) - alpha abs(z_(i j))), xi^-(z_(i j)))
+// $
+// where $h = sqrt(k_x^2 + k_y^2)$. This function decay exponentially fast in the reciprocal space.
+
+// The resulting algorithm is called Ewald2D#footnote(text(12pt)[D. Parry, Surf. Sci. 49 (2) (1975) 433–440.],), with a complexity of $O(N^2 log epsilon)$.
+// // , which prohibits the simulation of large systems.
+
+
+
+
+
+// == Sum-of-Exponential Ewald2D Method
+
+// === The SOE approximation
+
+// Inspired by the fast Gaussian transform via sum-of-exponential (SOE) approximation#footnote(text(12pt)[S. Jiang, L. Greengard, Commun. Comput. Phys. 31 (1) (2022) 1–26],), we propose a sum-of-exponential Ewald2D method#footnote(text(12pt)[Z. Gan, X. Gao, J. Liang, and Z. Xu. arXiv preprint arXiv:2405.06333, 2024; also see #link("https://github.com/HPMolSim/SoEwald2D.jl")],) utilizing VPMR#footnote(text(12pt)[Z. Gao, J. Liang, Z. Xu, J. Sci. Comput. 93 (2) (2022) 40],) method.
+
+// The Guassian kernel is approximated by a sum of exponential functions as follows:
+// $
+//   e^(- alpha^2 t^2) approx sum_(l = 1)^M  w_l e^(- s_l alpha abs(t))
+// $
+// where $w_l$ and $s_l$ are complex parameters of the SOE approximation, and the following error bound is satisfied:
+// $
+//   abs( e^(- alpha^2 t^2) - sum_(l = 1)^M  w_l e^(- s_l alpha abs(t)) ) < epsilon.
+// $
+// In VPMR, $M = 4$, $8$ and $16$ gives the error bound $epsilon = 10^(-4)$, $10^(-8)$ and $10^(-14)$, respectively.
+
+// #pagebreak()
+
+// === Approximation of the Ewald2D kernel
+
+// In Ewald2D summation, we observed the following identity:
+// $
+//   xi^+ (z) = e^( h abs(z))"erfc"(h/(2 alpha) + alpha abs(z)) & = (2 alpha) / sqrt(pi) e^(-h^2/(4 alpha^2)) e^(h abs(z)) integral_(abs(z))^(infinity) e^(-alpha^2 t^2 - h t) d t\
+// $
+// and the SOE approximation is applied to get:
+// $
+//    xi^+ (z) approx (2 alpha) / sqrt(pi) e^(-h^2/(4 alpha^2)) e^(h abs(z)) integral_(abs(z))^(infinity) sum_(l = 1)^M  w_l e^(- s_l alpha abs(t)  - h t) d t = (2 alpha) / sqrt(pi) e^(-h^2/(4 alpha^2)) sum_(l = 1)^M  w_l e^(- s_l alpha abs(z)) / (alpha s_l + h)
+// $
+// For $xi^-(z)$, the same approximation is applied.
+
+// Now the double summation over $i$ and $j$ in energy is approximated by
+// $
+//   sum_(i, j) q_i q_j xi (z_(i j)) approx sum_(l = 1)^M C_l sum_(i, j) q_i q_j e^(- s_l alpha abs(z_(i j)))
+// $
+// where $C_l$ is a constant irrelevant to $i$ and $j$.
+
+// #pagebreak()
+
+// === Summing up the exponentials via sorting
+
+// The double summation can be simplified as 
+// $
+//   S = sum_(i, j) q_i q_j e^(- abs(z_i - z_j))
+// $
+// which still takes $O(N^2)$ operations due to the absolute value.
+
+// For further acceleration, we reorder the indices via sorting (at most $O(N log N)$ operations):
+// $
+//   z_1 < z_2 < ... < z_N
+// $
+// so that the absolute value can be removed: 
+// $
+//   S = sum_(i = 1)^N q_i e^(-z_i) underbrace(sum_(j = 1)^i q_j e^(z_j), A_i) = sum_(i = 1)^N q_i e^(-z_i) A_i
+// $
+// where the array $A$ can be computed iteratively in $O(N)$ operations, then calculating $S$ takes another $O(N)$ operations.
+
+// #pagebreak()
+
+// === Complexity of the SOEwald2D method
+
+// Utilizing the SOE approximation, the double summation can be calculated in $O(N)$ operations.
+// Calculation of the energy can be simplified as
+// $
+//   sum_(k_x, k_y) e^(-h^2 / (4 alpha^2)) sum_(i, j) S(k_x, k_y, r_i, r_j) = underbrace(sum_(k_x, k_y), O(N^0.4)) e^(-h^2 / (4 alpha^2)) underbrace(f(k_x, k_y), O(N))
+// $
+// However, a summation in the reciprocal space is still required, and the resulting total complexity is $O(N^(1.4))$ since number of the Fourier mode to be summed is of $O(N^(0.4))$.
+
+// #pagebreak()
+
+// === Random batch sampling
+
+// To further reduce the complexity, we use the the random batch sampling technique#footnote(text(12pt)[S. Jin, L. Li, Z. Xu, Y. Zhao, SIAM J. Sci. Comput. 43 (4) (2021) B937–B960.],), where a importance sampling is applied:
+// $
+//   sum_(k_x, k_y) e^(-h^2 / (4 alpha^2)) f(k_x, k_y) approx H / P sum_((k_x, k_y) in cal(K)_P) f(k_x, k_y)
+// $
+// where $P$ Fourier modes are selected using the Gaussian as distribution, $H$ is the summation of Guassians.
+
+// It has been shown that for a system with fixed density, $P ~ O(1)$ is sufficient to achieve the correct equilibrium state, and gives an accurate ensemble average.
+
+// The resulting algorithm is called RBSE2D, with a complexity of $O(N)$.
+
+
+// #pagebreak()
+
+// === Numerical Results
+
+// The accuracy of the SOEwald2D method is determined by the error bound of the SOE approximation, and coverage exponentially fast as the Ewald2D method.
+
+// #figure(
+//   image("figs/soewald2d_error.png", width: 600pt),
+//   caption: [Error of the SOEwald2D method (a) with different number of term $M$ used in the SOE approximation (b) with different system sizes ($L_z$ is fixed).],
+// )
+
+// #pagebreak()
+
+// === Numerical Results
+
+// We use the RBSE2D method to simulate a typical Q2D electrolyte system as shown below:
+
+// #figure(
+//   image("figs/soewald2d_md.png", width: 500pt),
+//   caption: [The charge density of the Q2D electrolyte system in $z$ direction with different $P$, inset shows the relative error of the average energy.],
+// )
+
+// #pagebreak()
+
+// === Numerical Results
+
+// Time complexity of the method is verified as below:
+
+// #figure(
+//   image("figs/soewald2d_complexity.png", width: 500pt),
+//   caption: [Complexity of the Ewald2D method, SOEwald2D method and RBSE2D method.],
+// )
+
+// #pagebreak()
+
+// === Summary
+
+// The SoEwald2D utilized the SOE approximation and spirit of the FGT to accelerate the Ewald2D method.
+
+// It has the following advantages:
+// - Reducing the complexity from $O(N^2)$ to $O(N^1.4)$ with a controlled error bound.
+// - With the random batch sampling technique, the complexity can be further reduced to $O(N)$.
+// - Not sensitive to the aspect ratio of the system.
+
+// However, it also has some disadvantages:
+// - A sorting step is required, which is not efficient for parallel computing.
+// - Importance sampling is necessary to achieve linear complexity, which may not be efficient for cases requiring exact results.
+
+== Details of Fast Summation Algorithms
+
+=== Mid range part
+
+The mid range energy is given by:
+$
+  U_("mid") = sum_(i = 1)^N q_i cal(F)^(-1) [hat(W) e^(i k r_i) sum_(l = 0)^m w_l s_l^3 e^(- (k^2 s_l^2) / 4) abs(hat(W))^(-2) sum_(j = 1)^N q_j hat(W) e^( - i k r_j)]
+$
+
+A simple example of the Fourier spectral method:
+
+#align(center,
+grid(columns: 9,
+  align(center + horizon, image("figs/particlemesh_1.svg", width: 100pt)),
+  align(center + horizon, text(30pt)[$arrow$]),
+  align(center + horizon, image("figs/particlemesh_2.svg", width: 100pt)),
+  align(center + horizon, text(30pt)[$arrow$]),
+  align(center + horizon, image("figs/particlemesh_3.svg", width: 100pt)),
+  align(center + horizon, text(30pt)[$arrow$]),
+  align(center + horizon, image("figs/particlemesh_4.svg", width: 100pt)),
+  align(center + horizon, text(30pt)[$arrow$]),
+  align(center + horizon, image("figs/particlemesh_5.svg", width: 100pt)),
+)
+)
+
+#pagebreak()
+
+=== Fourier spectral solver for mid-range terms
+
+After manually adding a vacuum layer in the $z$ direction, the mid-range potential can be solved by a standard Fourier spectral solver#footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],) in the following procedure:
+- interpolate the particles using the window function to grid points
+- perform 3D FFT
+- scale the Fourier coefficients with the Green's function
+- perform inverse FFT
+- integrate from the 3D grid back to particles
+
+The process is similar to that of the NUFFT#footnote(text(12pt)[Franziska Nestler, Michael Pippig, and Daniel Potts, J. Comput. Phys. 285 (2015), 280–315.],).
+However, our method does not require any upsampling in the gridding step since the Gaussian decays quickly and it compensates the loss of accuracy in calculating the Fourier transform of the data.
+// This is because we have taken advantage of the fact that the Fourier transform of the Gaussian decays quickly and it compensates the loss of accuracy in calculating the Fourier transform of the data.
+
+#pagebreak()
+
+=== Fourier-Chebyshev solver for long-range terms
+
+For the long-range part, we map the charge density onto the Chebyshev proxy points in $z$, 
+$
+  phi_l (r) & = sum_(j) sum_(m) w_l q_j e^(- (r - r_j + m L)^2 / s_l^2) \
+  & = pi / (L_x L_y) sum_(k_x, k_y) w_l s_l^2 e^(- (h^2 s_l^2) / 4) e^(i (k_x x + k_y y)) sum_(j) q_j e^(- i (k_x x_j + k_y y_j)) e^(- (z - z_j)^2 / s_l^2)
+$
+where $m$ is the periodic index, and $h = (k_x, k_y)$ is the wave vector in the $x y$ plane.
+
+#pagebreak()
+
+=== Fourier-Chebyshev solver for long-range terms
+
+// Use Chebyshev function for fast summation in $z$ direction:
+// $
+//   sum_(i, j) f(x_i - x_j) = sum_(i) g(x_i) 
+// $
+// where 
+// $
+//   g(x) = sum_j f(x - x_j) approx 
+// $
+
+Consider the following summation in 1D:
+$
+  S = sum_(i, j) f(x_i - x_j)
+$
+where $x in (-1, 1)$. If we now the following function:
+$
+  g(x) = sum_j f(x - x_j)
+$
+then we can directly evaluate all $g(x_i)$ and sum them up.
+Chebyshev interpolation is a good choice for this purpose, especially when $f$ is extremely smooth.
+
+In our case, one first evaluate the values of the long-range Gaussians at the Chebyshev points, and then use the resulting Chebyshev series to evaluate the potential on the particle positions.
+
+#pagebreak()
+
+=== Fourier-Chebyshev solver for long-range terms
+
+This changes the problem into a set of 2D problems.
+
+#align(center,
+  image("figs/sog_long.png", width: 500pt),
+)
+
+On each layer the problem can be solved by a standard 2D Fourier spectral solver.
+Then the potential is integrated back to particles using the inverse Chebyshev transform.
