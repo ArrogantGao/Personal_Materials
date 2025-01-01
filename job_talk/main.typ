@@ -184,7 +184,7 @@ Different contraction orders can lead to different complexities, the order with 
 
 === Optimizing the contraction order
 
-Finding the optimal contraction order is a NP-hard problem! 
+Finding the optimal contraction order is a NP-hard#footnote(text(12pt)[I.L. Markov, Y. Shi, SIAM J. Comput. 38, 963–981 (2008).],) problem! 
 // However, it is lucky that we are always satisfied with a good enough solution, thus heuristic methods are sufficient in practice.
 
 In the past few years, tools have been developed to optimize the contraction order:
@@ -198,16 +198,38 @@ In the past few years, tools have been developed to optimize the contraction ord
 
 == Probabilistic Inference via Tensor Network Contraction
 
-=== TN representation of probabilistic models
+=== Probabilistic graphical models
 
-// The probabilistic graphical models (PGM) is a probabilistic model for which a graph expresses the conditional dependence structure between random variables.
+The probabilistic graphical models (PGM) is a probabilistic model for which a graph expresses the conditional dependence structure between random variables.
 
 // A undirected graph can be used to factorize the joint distribution of the random variables, and can be represented as a tensor network.
 
 // A joint distribution can be represented as a tensor network with open edges.
 
 // For example, given the following joint distribution:
-In probabilistic graphical models, a joint distribution can be factorized as:
+
+#align(center, canvas({
+  import draw: *
+  let dx = 3
+  let dy = 0.5
+  for (x, y, name, txt) in ((-7, 0, "a", [Recent trip to #text(red)[A]sia]), (3.5, 0, "b", [Patient is a #text(red)[S]moker]), (-7, -2, "c", [#text(red)[T]uberculosis]), (0, -2, "d", [#text(red)[L]ung cancer]), (7, -2, "e", [#text(red)[B]ronchitis]), (-3.5, -4, "f", [#text(red)[E]ither T or L]), (-7, -6, "g", [#text(red)[X]-Ray is positive]), (0, -6, "h", [#text(red)[D]yspnoea])) {
+    rect((x - dx, y - dy), (x + dx, y + dy), stroke: black, name: name, radius: 5pt)
+    content((x, y), [#txt])
+  }
+  for (a, b) in (("a", "c"), ("b", "d"), ("b", "e"), ("c", "f"), ("d", "f"), ("f", "g"), ("f", "h"), ("e", "h")) {
+    line(a, b, mark: (end: "straight"))
+  }
+  content((12, -3), box([*Tensors*\ p(A)\ p(S)\ p(T|A)\ p(L|S)\ p(B|S)\ p(E|T,L)\ p(X|B)\ p(D|E,X)], stroke: blue, inset: 10pt))
+})) 
+
+Marginal probability:
+
+#text(19pt)[$P(L) = sum_(A, S, T, B, E, X, D) P(A) P(S) P(T|A) P(L|S) P(B|S) P(E|T,L) P(X|E) P(D|E,B)$]
+
+#pagebreak()
+=== TN representation of probabilistic models
+
+A joint distribution can be factorized as:
 $
   P(i_0, j_0, k_0, l_0) = P_(i j) (i_0, j_0) P_(j k) (j_0, k_0) P_(k l) (k_0, l_0) P_(l i) (l_0, i_0)
 $
@@ -703,7 +725,7 @@ We select $m$ so that $s_m < eta L_z < s_(m+1)$, where $eta$ is $O(1)$ constant.
   #grid(columns: 3,
     image("figs/farfield.svg", width: 300pt),
     h(50pt),text(20pt)[
-      The mid range part decays rapidly in $z$ direction, so that the mid range potential can be accurately periodicized in the z-direction and effectively handled using a pure Fourier spectral solver with less zero padding.
+      The mid range part decays rapidly in $z$ direction, so that the mid range potential can be accurately periodicized in the z-direction and effectively handled using a pure Fourier spectral solver#footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],) with less zero padding.
       
       The long range part is extremely smooth in $[-L_z / 2, L_z / 2]$, and can be solved by a Fourier-Chebyshev method with $O(1)$ number of Chebyshev points.
     ]
