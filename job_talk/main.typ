@@ -49,7 +49,7 @@
   // code-size: 16pt,
 
   config-info(
-    title: [Numerical Methods for Modeling and Simulation],
+    title: [Modeling and Simulating Scientific Problems],
     subtitle: [Tensor Network Methods and Fast Summation Algorithms],
     author: text(23pt)[Xuanzhao Gao],
     institution: text(20pt)[Hong Kong University of Science and Technology],
@@ -68,7 +68,7 @@
 
 === Tensor Networks
 
-Tensor network (TN) is a powerful tool to represent and manipulate high-dimensional data, and have been used in various fields such as quantum physics, machine learning and combinatorial optimization.
+Tensor network (TN) is a powerful tool to represent and manipulate high-dimensional data, and have been used in various fields such as quantum physics and machine learning.
 
 #subpar.grid(
   figure(image("figs/tn_manybody.png"), caption: [
@@ -384,7 +384,7 @@ By replacing the matrix multiplication in the contraction with the GPU kernels, 
 === Summary
 
 We applied the modern tensor network techniques to solve the probabilistic inference tasks, including contraction order optimization, automatic differentiation, generic tensor network, and GPU acceleration.
-It is shown that with these techniques, a exponential speedup is achieved against the traditional solvers.
+It is shown that with these techniques, an exponential speedup is achieved against the traditional solvers.
 
 Advantages:
 - powerful contraction order optimization tools
@@ -400,7 +400,7 @@ Disadvantages:
 
 === Failure of tensor network method
 
-Similar techniques are alos used in combinatorial optimization problems#footnote(text(12pt)[*X.-Z. Gao*, X.-F. Li, J.-G. Liu, arXiv:, (2024), also see #link("https://github.com/QuEraComputing/GenericTensorNetworks.jl")],) #footnote(text(12pt)[J.-G. Liu, X. Gao, M. Cain, M. D. Lukin, and S.-T. Wang, SIAM J. Sci. Comput., 45 (2023), pp. A1239–A1270],), such as the maximum independent set (MIS) problem, which can be solved by tropical TN.
+Similar techniques are also used in combinatorial optimization problems#footnote(text(12pt)[*X.-Z. Gao*, X.-F. Li, J.-G. Liu, arXiv:, (2024), also see #link("https://github.com/QuEraComputing/GenericTensorNetworks.jl")],) #footnote(text(12pt)[J.-G. Liu, X. Gao, M. Cain, M. D. Lukin, and S.-T. Wang, SIAM J. Sci. Comput., 45 (2023), pp. A1239–A1270],), such as the maximum independent set (MIS) problem, which can be solved by tropical TN.
 
 MIS problem: given a graph, find the largest subset of vertices such that no two vertices are connected by an edge.
 
