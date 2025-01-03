@@ -176,7 +176,7 @@ table(
   s[2008], s[$O^*(1.0977^n)$ for 3-MIS], s[@Bourgeois2008], s[],
   s[2009], s[$O^*(1.0919^n)$ for 3-MIS], s[@Xiao2009], s[],
   s[2009], s[$O^*(1.2132^n)$], s[@Kneis2009], s[Satellite rule],
-  s[2013], s[$O^*(1.0836^n)$], s[@Xiao2013], s[#highlight[SOTA]],
+  s[2013], s[$O^*(1.0836^n)$ for 3-MIS], s[@Xiao2013], s[#highlight[SOTA]],
   s[2016], s[$O^*(1.2210^n)$], s[@Akiba2016], s[#highlight[PACE winner]],
   s[2017], s[$O^*(1.1996^n)$], s[@Xiao2017], s[SOTA],
 ),
@@ -201,7 +201,7 @@ grid(columns: 3,
   ]),
   h(20pt),
   figure(image("figs/tn_inference.png", height: 280pt), caption: [
-    #text(15pt)[Solve large-scale PACE inference problem exactly via tensor network @Roa2024.]
+    #text(15pt)[Exact solve large-scale PACE inference problem via tensor network @Roa2024.]
   ]),
 )
 )
@@ -224,11 +224,9 @@ grid(columns: 5,
 )
 
 However, the tensor network method does not work well for non-geometric graphs.
-Its complexity on 3-regular graphs is about $O(1.1224^n)$, far from the SOTA.
+Its complexity on 3-regular graphs is about $O(1.1224^n)$, far from the SOTA ($O^*(1.0836^n)$).
 
 #pagebreak()
-
-== The optimal branching algorithm
 
 === What is the difference?
 
@@ -254,7 +252,8 @@ Its complexity on 3-regular graphs is about $O(1.1224^n)$, far from the SOTA.
 
 #align(center, box([Key point: No need to use all results, find the correct pattern!], stroke: black, inset: 10pt))
 
-#pagebreak()
+// #pagebreak()
+== The optimal branching algorithm
 
 ===
 
@@ -274,6 +273,8 @@ grid(
 )
 )
 
+
+
 #pagebreak()
 
 ===
@@ -291,13 +292,13 @@ The process of finding the optimal branching rules is as the following:
   line("clauses", "branching", mark: (end: "straight"))
 }))
 
-The candidate clauses are the combinations of the possible assignments, for example:
+The candidate clauses are the combinations of the possible assignments, for example, a combination of the 3rd and 4th assignments is given by:
 
 $
   "combine"(not a and b and not c and d and not e, a and b and c and not d and not e) = b and not e
 $
 
-Since we say it is a combination of the 3rd and 4th assignments, we say it covers ${3, 4}$.
+we say $b and not e$ covers ${3, 4}$.
 The clauses are generated iteratively.
 
 #pagebreak()
@@ -306,14 +307,14 @@ The clauses are generated iteratively.
 
 #timecounter(2)
 
-Then we solve a set covering problem by formulating it as a mixed integer programming problem#footnote(text(12pt)[T. Achterberg, Math. Program. Comput., 1 (2009), pp. 1–41],).
+Then we solve a set covering problem by formulating it as a mixed integer programming problem.
 
 $
 min_(gamma, bold(x)) gamma " s.t. " & sum_(i=1)^m gamma^(-Delta rho(c_i)) x_i = 1,\
 & union.big_(i = 1, dots, m\ x_i = 1) J_i = {1, 2, dots, n},  #h(50pt) arrow "valid branching rule"\
 & x_i in {0, 1} #h(161pt) arrow "a clause is selected or not"
 $
-where $rho(c_i)$ is the number of variables fixed in the clause $c_i$.
+where $rho(c_i)$ is the size reduced by the clause $c_i$ of the problem.
 
 The chosen clauses form the optimal branching rule:
 $
@@ -333,8 +334,9 @@ A bottle neck case has been reported in Xiao's work @Xiao2013, with a branching 
   image("figs/ob_bottleneck.png", width: 300pt),
   h(30pt),
   align(horizon, text(20pt, black)[
-    - 71 possible assignments, 15782 candidate clauses. However, the optimal branching rule can be solved in few seconds.
-    - Optimal branching vector: $[10, 16, 26, 26]$, which $gamma = 1.0817$
+    - 71 possible assignments, 15782 candidate clauses. 
+    - The optimal branching rule can be solved in few seconds.
+    - Size reduced by branches: $[10, 16, 26, 26]$, with $gamma = 1.0817$
   ]),
 )
 
@@ -464,7 +466,6 @@ Disadvantages:
     - Contraction order optimization @gray2021hyper
     - Automatic differentiation @liao2019differentiable
     - Tropical tensor network @liu2023computing
-    - GPU acceleration
 
     An exponential speedup is achieved for the typical inference tasks against the widely used solvers on the UAI problem set#footnote(text(12pt)[https://auai.org/uai2014/competition.shtml],).
   ],
@@ -492,7 +493,7 @@ A custom GPU kernel#footnote(text(12pt)[Code: #link("https://github.com/TensorBF
 )
 
 
-== A fast spectral sum-of-Gaussians method for electrostatic summation in quasi-2D systems
+== A fast spectral sum-of-Gaussians method for electrostatic summation in doubly periodic 3D systems
 
 A sum-of-Gaussian (SOG) approximation @beylkin2010approximation of the Coulomb kernel is utilized in our method @gao2024fast, where
 $
