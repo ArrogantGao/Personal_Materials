@@ -234,7 +234,7 @@ $
 
 
 - The smoothness and separability of the Gaussian removes the need of the kernel truncation in the free direction.
-- Fourier transform of the Gaussian decays quickly and it compensates the loss of accuracy in calculating the Fourier transform of the data, no upsampling is needed.
+- No upsampling is needed since the Fourier transform of the Gaussian decays quickly and it compensates the loss of accuracy in calculating the Fourier transform of the data.
 
 #pagebreak()
 
@@ -247,7 +247,7 @@ $
   Phi_("long")^l (arrow(r)) = sum_(arrow(n)) sum_(j = 1)^N q_j w_l e^(- (arrow(r) - arrow(r)_j + arrow(n) circle arrow(L))^2 / s_l^2), quad s_l > eta L_z
 $
 
-The extremely smooth long-range Gaussians are interpolate on the Chebyshev proxy points in $z$, similar to that of the periodic FMM @jiang2023jcp, and only $O(1)$ number of Chebyshev points are required.
+The extremely smooth long-range Gaussians are interpolated on the Chebyshev proxy points in $z$, similar to that of the periodic FMM @jiang2023jcp, and only $O(1)$ number of Chebyshev points are required.
 
 Then 2D NUFFT can be used to evaluate the potential on a tensor-product grid.
 
