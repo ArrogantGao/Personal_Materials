@@ -1,0 +1,1192 @@
+#import "@preview/cetz:0.2.2": canvas, draw, tree, plot
+#import "graph.typ": *
+#import "@preview/subpar:0.2.0"
+
+#import "@preview/pinit:0.1.3": *
+#import "@preview/ctheorems:1.1.3": *
+#import "diagbox.typ": *
+
+// Theorems configuration by ctheorems
+#show: thmrules.with(qed-symbol: $square$)
+
+#let theorem = thmbox("theorem", "Theorem", fill: rgb("#eeffee")).with(numbering: none)
+#let corollary = thmplain(
+  "corollary",
+  "Corollary",
+  base: "theorem",
+  titlefmt: strong
+)
+
+#let definition = thmbox("definition", "Definition", inset: (x: 1.2em, top: 1em)).with(numbering: none)
+#let example = thmplain("example", "Example").with(numbering: none)
+#let proof = thmproof("proof", "Proof")
+// #let problem = thmplain("problem", "Problem").with(numbering: none)
+
+#let redtext(name) = text(fill:red)[#name]
+#let bluetext(name) = text(fill:blue)[#name]
+
+#let hd(name) = table.cell(text(12pt)[#name], fill: green.lighten(50%))
+#let s(name) = table.cell(text(12pt)[#name])
+
+#let hdl(name) = table.cell(text(15pt)[#name], fill: green.lighten(50%))
+#let sl(name) = table.cell(text(15pt)[#name])
+
+#set page(height: auto)
+#set par(justify: true)
+
+#let globalvars = state("t", 0)
+#let timecounter(minutes) = [
+  #globalvars.update(t => t + minutes)
+  #place(top + right,text(16pt, red)[#context globalvars.get()min])
+]
+#let clip(image, top: 0pt, bottom: 0pt, left: 0pt, right: 0pt) = {
+  box(clip: true, image, inset: (top: -top, right: -right, left: -left, bottom: -bottom))
+}
+
+#let leftright(a, b) = align(center, grid(columns: 2, gutter: 30pt, align(left, box(width: 350pt)[#a]), align(left, box(width: 350pt)[#b])))
+
+#import "@preview/touying:0.5.5": *
+#import themes.metropolis: *
+#show: metropolis-theme.with(
+  aspect-ratio: "4-3",
+  footer: self => self.info.title,
+  navigation: "none",
+  text-font: ("Libertinus Serif"),
+  text-size: 20pt,
+  align: horizon,
+
+  config-info(
+    title: [Modeling and Simulating Scientific Problems],
+    subtitle: [Fast Summation Algorithms and Tensor Networks Methods],
+    author: text(23pt)[Xuanzhao Gao],
+    institution: text(20pt)[Hong Kong University of Science and Technology],
+    date: text(23pt)[2025-1-10],
+  ),
+
+  config-colors(
+    primary: rgb("#eb811b"),
+    primary-light: rgb("#d6c6b7"),
+    secondary: rgb("#343d73"),
+    neutral-lightest: rgb(255, 255, 255),
+    neutral-dark: rgb("#24233b"),
+    neutral-darkest: rgb("#23373b"),
+  )
+)
+
+#show link: underline
+
+#title-slide()
+
+= Outline <touying:hidden>
+
+#outline(title: none, indent: 1em, depth: 1)
+
+= A Fast Spectral Sum-of-Gaussians Method for Coulomb Interaction
+
+#text(20pt)[Joint work with Qi Zhou, Jiuyang Liang, Zhenli Xu, and Shidong Jiang]
+
+#text(20pt)[arXiv:2412.04595]
+
+== Background
+
+#pagebreak()
+
+=== Doubly periodic systems
+
+#timecounter(1)
+
+Quasi-2D systems @mazars2011long are at the macroscopic scale in $x y$, but microscopic in $z$, so that are always modeled as doubly periodic in simulations.
+// Q2D systems are widely exist in nature and engineering, for example, cell membranes and electrolyte near surfaces.
+
+#figure(
+  image("figs/Q2D.png", width: 600pt),
+  caption: [Illustration of a doubly periodic system.],
+)
+
+#pagebreak()
+=== Coulomb interaction
+
+#timecounter(1)
+
+Coulomb interaction plays a key role in nature, leading to effect such as ion transportation and self-assembly.
+
+#figure(
+  image("figs/self-assembly.png", width: 450pt),
+  caption: [Self-assembly of nanoparticles via Coulomb interaction @luijten2014.
+],)
+
+However, the Coulomb interaction decays as $r^(-1)$ in 3D, so that is long ranged and singular at $r=0$, which make such simulation computationally expensive.
+// Complexity of a direct sum of the Coulomb interaction in doubly periodic systems is about $O(N^2 epsilon^(-1/3))$.
+
+#pagebreak()
+
+=== Algorithms for Q2D charged systems
+#timecounter(1)
+
+Methods have been developed to accelerate the Coulomb interaction in Q2D systems.
+
+The very first method is the Ewald2D#footnote(text(12pt)[David E. Parry, Surf. Sci. 49 (1975), no. 2, 433–440.],) method based on the Ewald splitting of the Coulomb kernel. It is accurate but with $O(N^2)$ complexity.
+
+To reduce the complexity, most methods rely on the following two strategies:
+
+- Fourier spectral methods#footnote(text(12pt)[Ondrej Maxian, Rau´l P. Pel´aez, Leslie Greengard, and Aleksandar Donev, J. Chem. Phys. 154 (2021), no. 20, 204107.],) #footnote(text(12pt)[Franziska Nestler, Michael Pippig, and Daniel Potts, J. Comput. Phys. 285 (2015), 280–315.],) #footnote(text(12pt)[Davoud Saffar Shamshirgar, Joar Bagge, and Anna-Karin Tornberg, J. Chem. Phys. 154 (2021), no. 16, 164109.],): based on Ewald splitting and fast Fourier transform (FFT), with $O(N log N)$ complexity.
+
+- Fast multipole methods#footnote(text(12pt)[Jiuyang Liang, Jiaxing Yuan, Erik Luijten, and Zhenli Xu, J. Chem. Phys. 152 (2020), no. 13, 134109.],) #footnote(text(12pt)[Ruqi Pei, Travis Askham, Leslie Greengard, and Shidong Jiang, J. Comp. Phys. 474 (2023), 111792.],) #footnote(text(12pt)[Wen Yan and Michael Shelley, J. Comput. Phys. 355 (2018), 214–232.],): based on the multipole expansion of the Coulomb kernel, with $O(N)$ complexity.
+
+#pagebreak()
+
+=== Algorithms for Q2D charged systems
+#timecounter(1)
+
+For doubly periodic systems, one major challenge is the large prefactor in $O(N)$ or $O(N log N)$ compared to 3D-PBC solvers, especially when the system is strongly confined in the $z$ direction, i.e., $L_z << L_x, L_y$.
+
+For the FFT based methods, the singularity introduced by the Laplacian in the Fourier integral along the free direction leads to huge additional zero-padding#footnote(text(12pt)[Ondrej Maxian, Rau´l P. Pel´aez, Leslie Greengard, and Aleksandar Donev, J. Chem. Phys. 154 (2021), no. 20, 204107.],).
+
+For the FMM based methods, more near field contributions is included#footnote(text(12pt)[Wen Yan and Michael Shelley, J. Comput. Phys. 355 (2018), 214–232.],).
+
+
+== The algorithm
+
+=== The sum-of-Gaussians approximation
+
+#timecounter(1)
+
+In our work, we use a sum-of-Gaussians (SOG) approximation @beylkin2010approximation of the Coulomb kernel, where
+$
+  1 / r approx (2 log b) / sqrt(2 pi sigma^2) sum_(l = - infinity)^(infinity) 1 / (b^l) e^(- r^2 / (sqrt(2) b^l sigma)^2), " with" cal(E)_r < 2 sqrt(2) e^(- pi^2 / (2 log b))
+$
+
+Then we can split the potential into three parts:
+$
+  1 / r approx underbrace(( 1 / r - sum_(l = 0)^M w_l e^(- r^2 / s_l^2)) bb(1)_(r < r_c), "near-field")+ underbrace(sum_(l = 0)^m w_l e^(- r^2 / s_l^2), "mid-range") + underbrace(sum_(l = m + 1)^M w_l e^(- r^2 / s_l^2), "long-range")
+$
+where $s_l$ and $w_l$ are the nodes and weights of the SOG approximation.
+// The nodes $s_l$ are arranged in monotone increasing order with $s_M >> L_x, L_y$, and $r_c$ is the cutoff radius to balance the near-field and far-field contributions.
+
+// #pagebreak()
+
+// === Near-field potential
+
+// #timecounter(1)
+
+// The near-field potential is computed by a real space truncation.
+
+#pagebreak()
+
+=== Splitting the far-field potential
+
+#timecounter(1)
+
+// How to determine the turning point $m$? 
+
+Selecting $m$ so that $s_m < eta L_z < s_(m+1)$, where $eta$ is $O(1)$ constant.
+
+#figure(
+  image("figs/farfield.svg", width: 400pt),
+  caption: [Mid-range part and long-range part of the potential, $L_z = 10$, $eta approx 0.6$.],
+)
+
+#pagebreak()
+
+=== Mid-range potential
+
+#timecounter(1)
+
+The mid-range potential is computed by a standard Fourier spectral solver with little zero padding and no upsampling.
+
+#pagebreak()
+
+=== Long-range potential
+
+#timecounter(1)
+
+The long-range potential is computed by a Fourier-Chebyshev solver with $O(1)$ number of Chebyshev points.
+
+== Numerical results
+
+#timecounter(2)
+
+The method #footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.jl")],) is benchmarked on the following systems:
+- Cubic systems with fixed aspect ratio and volume density.
+- Strongly confined systems with fixed $L_z$ and surface density.
+
+#figure(
+  leftright(image("figs/sog_benchmark.png", width: 370pt), image("figs/sog_benchmark.png", width: 370pt)),
+  caption: [#text(15pt)[Error and time cost for the SOG method in the (a,c) cubic and (b,d) strongly confined systems.]],
+)
+
+#pagebreak()
+
+== Summary
+
+#timecounter(1)
+
+A fast and accurate solver for Q2D charged systems is developed based on the sum-of-Gaussian approximation of the Coulomb kernel and kernel splitting, which can be regarded as a 2-level DMK method @greengard2023dual.
+// The Coulomb kernel is splitted into three parts:
+// - near field terms: solved by real space truncation
+// - mid-range terms: solved by the Fourier spectral method with little zero padding and no upsampling
+// - long-range terms: solved by the Fourier-Chebyshev method with $O(1)$ number of Chebyshev points
+
+It has the following advantages:
+- spectrally accurate with rigorous error analysis
+- not sensitive to the aspect ratio of the system
+- smoothness and separability of the Gaussian removes the need of kernel truncation in the free direction
+- does not require any upsampling in the gridding step
+- all calculations are carried out in the fundamental cell itself
+- easy to be implemented and parallelized for large-scale MD simulations
+
+Currently, the major shortcoming of this method is its non-adaptive nature, and has a complexity of $O(N log N)$ rather than $O(N)$.
+
+= Automated Discovery of the Optimal Branching Rules 
+
+#text(20pt)[Joint work with Yi-Jia Wang, Pan Zhang, and Jin-Guo Liu]
+
+#text(20pt)[arXiv:2412.07685]
+
+== Background
+
+=== The maximum independent set problem
+#timecounter(1)
+
+#align(center, box([One of the first batch of 21 NP-hard problems proved by @Karp1972.], stroke: black, inset: 10pt))
+
+An independent set is a set of vertices in a graph, no two of which are adjacent.
+
+#align(center, canvas({
+  import draw: *
+  let s = 3
+  let dy = 3.0
+  let la = (-s, 0)
+  let lb = (0, s)
+  let lc = (0, 0)
+  let ld = (s, 0)
+  let le = (s, s)
+  for (loc, name, color) in ((la, "a", red), (lb, "b", black), (lc, "c", red), (ld, "d", black), (le, "e", red)) {
+    circle(loc, radius:0.5, name: name, fill: color)
+    content(loc, text(20pt, fill:white)[$#name$])
+  }
+  for (a, b) in (("a", "b"), ("b", "c"), ("c", "d"), ("d", "e"), ("b", "d")) {
+    line(a, b)
+  }
+  content((1.5, -1.5), [$G = (V, E)$, MIS = ${a, c, e}$, size $alpha(G) = 3$])
+}))
+
+MIS problem has an exponential large solution space and no polynomial-time algorithm is known to solve it exactly.
+
+The branching algorithms @Fomin2013 is the most widely used method to solve this problem.
+
+#pagebreak()
+
+=== Branching algorithm
+
+#timecounter(2)
+
+Branching algorithm rely on predesigned rules to search the solution space in a tree-like structure. 
+
+Complexity of a branching algorithm is always described as $O(gamma^n)$ where $gamma$ is the branching factor and $n$ is the size of the problem.
+
+#grid(columns: 3,
+align(center + horizon,
+canvas(length: 0.71cm, {
+  import draw: *
+  let scircle(loc, radius, name) = {
+    circle((loc.at(0)-0.1, loc.at(1)-0.1), radius: radius, fill:black)
+    circle(loc, radius: radius, stroke:black, name: name, fill:white)
+  }
+  let s = 1.5
+  let dy = 3.0
+  let la = (-s, 0)
+  let lb = (0, s)
+  let lc = (0, 0)
+  let ld = (s, 0)
+  let le = (s, s)
+  scircle((0, 0), (3, 2), "branch")
+  for (l, n) in ((la, "a"), (lb, "b"), (lc, "c"), (ld, "d"), (le, "e")){
+    circle((l.at(0), l.at(1)-s/2), radius:0.4, name: n, fill: black)
+    content((l.at(0), l.at(1)-s/2), text(14pt, fill:white)[$#n$])
+  }
+  for (a, b) in (("a", "b"), ("b", "c"), ("c", "d"), ("d", "e"), ("b", "d")){
+    line(a, b)
+  }
+  scircle((-4, -dy), (2, 1.5), "brancha")
+  for (l, n) in ((lc, "c"), (ld, "d"), (le, "e")){
+    let loc = (l.at(0)-5, l.at(1)-s/2-dy)
+    circle(loc, radius:0.4, name: n, fill: black)
+    content(loc, text(14pt, fill:white)[$#n$])
+  }
+  for (a, b) in (("c", "d"), ("d", "e"), ("c", "d")){
+    line(a, b)
+  }
+  scircle((4, -dy), (1, 1), "branchb")
+  circle((4, -dy), radius:0.4, name: "e", fill: black)
+  content((4, -dy), text(14pt, fill:white)[$e$])
+  scircle((-6, -2*dy), (1, 1), "branchaa")
+  circle((-6, -2*dy), radius:0.4, name: "e", fill: black)
+  content((-6, -2*dy), text(14pt, fill:white)[$e$])
+  scircle((-2, -2*dy), (0.5, 0.5), "branchab")
+  content((-2, -2*dy), text(14pt)[$2$])
+  scircle((4, -2*dy), (0.5, 0.5), "branchba")
+  content((4, -2*dy), text(14pt)[$2$])
+  scircle((-6, -3*dy), (0.5, 0.5), "branchaaa")
+  content((-6, -3*dy), text(14pt)[$3$])
+  line("branch", "brancha")
+  line("branch", "branchb")
+  line("brancha", "branchaa")
+  line("brancha", "branchab")
+  line("branchb", "branchba")
+  line("branchaa", "branchaaa")
+  content((-5, -dy/2+0.5), text(12pt)[$G \\ N[a]$])
+  content((3.5, -dy/2), text(12pt)[$G \\ N[b]$])
+  content((-6.8, -3*dy/2), text(12pt)[$G \\ N[c]$])
+  content((-1.5, -3*dy/2-0.4), text(12pt)[$G \\ N[d]$])
+  content((-4.8, -5*dy/2-0.4), text(12pt)[$G \\ N[e]$])
+  content((5.2, -3*dy/2-0.4), text(12pt)[$G \\ N[e]$])
+})
+),
+h(20pt),
+align(center,
+table(
+  columns: (auto, auto, auto, auto),
+  table.header(hd[Year], hd[Running times], hd[References], hd[Notes]),
+  s[1977], s[$O^*(1.2600^n)$], s[@Tarjan1977], s[],
+  s[1986], s[$O^*(1.2346^n)$], s[@Jian1986], s[],
+  s[1986], s[$O^*(1.2109^n)$], s[@Robson1986], s[],
+  s[1999], s[$O^*(1.0823^m)$], s[@Beigel1999], s[],
+  s[2001], s[$O^*(1.1893^n)$], s[@Robson2001], s[],
+  s[2003], s[$O^*(1.1254^n)$ for 3-MIS], s[@Chen2003], s[],
+  s[2005], s[$O^*(1.1034^n)$ for 3-MIS], s[@Xiao2005], s[],
+  s[2006], s[$O^*(1.2210^n)$], s[@Fomin2006], s[],
+  s[2006], s[$O^*(1.1225^n)$ for 3-MIS], s[@Fomin2006b], s[],
+  s[2006], s[$O^*(1.1120^n)$ for 3-MIS], s[@Furer2006], s[],
+  s[2006], s[$O^*(1.1034^n)$ for 3-MIS], s[@Razgon2006], s[],
+  s[2008], s[$O^*(1.0977^n)$ for 3-MIS], s[@Bourgeois2008], s[],
+  s[2009], s[$O^*(1.0919^n)$ for 3-MIS], s[@Xiao2009], s[],
+  s[2009], s[$O^*(1.2132^n)$], s[@Kneis2009], s[],
+  s[2013], s[$O^*(1.0836^n)$ for 3-MIS], s[@Xiao2013], s[#highlight[SOTA]],
+  s[2016], s[$O^*(1.2210^n)$], s[@Akiba2016], s[#highlight[PACE winner]],
+  s[2017], s[$O^*(1.1996^n)$], s[@Xiao2017], s[SOTA],
+),
+)
+)
+
+#pagebreak()
+
+// === Tensor networks
+// #timecounter(1)
+
+// Tensor network (TN) is a powerful tool to represent and manipulate high-dimensional data, and have been used in various fields such as quantum physics @nielsen2010quantum and machine learning @stoudenmire2016supervised.
+// // Tensor networks have proven to be an powerful tool for solving large-scale problems.
+// // In 2019, Google announced quantum supremacy with their Sycamore chip @arute2019quantum; however, by 2022, their results were classically simulated using tensor network-based methods @pan2022simulation.
+
+// #align(center,
+// grid(columns: 3,
+//   figure(image("figs/big_batch.png", height: 280pt), caption: [
+//     #text(15pt)[Classical simulation of Google's Sycamore chip via tensor network @pan2022simulation.]
+//   ]),
+//   h(20pt),
+//   figure(image("figs/tn_inference.png", height: 280pt), caption: [
+//     #text(15pt)[Exact solve large-scale PACE inference problem via tensor network @Roa2024.]
+//   ]),
+// )
+// )
+
+// #pagebreak()
+
+== The algorithm
+
+=== Tensor networks for the MIS problem
+#timecounter(2)
+
+// The MIS problem can be efficiently solved and analyzed by tensor networks @ebadi2022quantum  @liu2023computing.
+
+// #align(center,
+// grid(columns: 5,
+//   align(center + horizon, image("figs/kingsubgraph.png", width:150pt)),
+//   h(30pt),
+//   align(center + horizon, text(40pt)[$arrow$]),
+//   h(30pt),
+//   align(center + horizon, image("figs/tn_mis_solutionspace.png", width:400pt)),
+// )
+// )
+
+Tensor networks can be used to extract the local information of the sub-graph @gao2024programmingguidesolvingconstraint @liu2023computing.
+
+#align(center, 
+  grid(
+    columns: 5,
+    align(center + horizon, 
+      canvas({
+        import draw: *
+
+        circle((0, 0), radius: 2.7, fill: rgb("#63e64269"))
+        circle((0, -0.2), radius: 1.9, fill: white, stroke: white)
+
+        let la = (0, 1)
+        let lb = (-1, -1)
+        let lc = (1, -1)
+        let ld = (0, 0)
+        let le = (1, 0)
+        let s = 1.7
+        let lao = (0, 2.0)
+        let lbo = (-s, -s)
+        let lco = (s, -s)
+
+        line(la, lao, stroke: (dash : "dashed"))
+        line(lb, lbo, stroke: (dash : "dashed"))
+        line(lc, lco, stroke: (dash : "dashed"))
+
+        for (l, n) in ((la, "a"), (lb, "b"), (lc, "c"), (ld, "d"), (le, "e")){
+          circle((l.at(0), l.at(1)), radius:0.3, name: n, fill: black)
+          content((l.at(0), l.at(1)), text(14pt, fill:white)[$#n$])
+        }
+        for (a, b) in (("a", "e"), ("b", "c"), ("c", "d"), ("d", "a"), ("b", "d"), ("d", "e"), ("c", "e")){
+          line(a, b)
+        }
+
+        content((-1.2, 2), text(16pt, fill:black)[$G$])
+        content((-1, 1), text(16pt, fill:black)[$R$])
+      })
+    ),
+    h(30pt),
+    align(center + horizon, 
+      canvas({
+        import draw: *
+        let a = (-2, 0)
+        let b = (2, 0)
+        line(a, b, mark: (end: "straight"))
+        content((0, -1.2), text(15pt)[Contract the local \ tensor network])
+      })
+    ),
+    h(30pt),
+    table(
+      columns: (auto, auto),
+      table.header(hdl[Boundary configuration: $s_(a b c)$], hdl[Possible assignments: $s_(a b c d e)$]),
+      sl[000], sl[00010, 00001],
+      sl[100], sl[10000],
+      sl[010], sl[01001],
+      sl[001], sl[00100],
+      sl[110], sl[11000],
+      sl[101], sl[10100]
+    )
+  )
+)
+
+However, a pure tensor network method does not work well for non-geometric graphs.
+Its complexity on 3-regular graphs is about $O(1.1224^n)$, far from the SOTA ($O^*(1.0836^n)$).
+
+#pagebreak()
+
+=== What is the difference?
+
+#timecounter(1)
+
+  #leftright(
+    text(20pt)[Tensor network approach \ 1. Contract the local tensor network for the sub-graph and pick the non-zero elements. \ 2. For all possible boundaries, fix all the variables and continue the contraction$ gamma^n = 6 times gamma^(n-5) arrow gamma approx 1.4310 $],
+    text(20pt)[Branching algorithm \ 1. Search for structures in the sub-graph. \ 2. Find $d$ and $e$ are connected and $N[e] subset N[d]$, satisfying the domination rule, fix $d = 0$, i.e., not in the MIS $ gamma = 1.0 $]
+  )
+
+#align(center, 
+  grid(
+    columns: 3,
+    align(center + horizon, 
+      canvas({
+        import draw: *
+
+        circle((0, 0), radius: 2.7, fill: rgb("#63e64269"))
+        circle((0, -0.2), radius: 1.9, fill: white, stroke: white)
+
+        let la = (0, 1)
+        let lb = (-1, -1)
+        let lc = (1, -1)
+        let ld = (0, 0)
+        let le = (1, 0)
+        let s = 1.7
+        let lao = (0, 2.0)
+        let lbo = (-s, -s)
+        let lco = (s, -s)
+
+        line(la, lao, stroke: (dash : "dashed"))
+        line(lb, lbo, stroke: (dash : "dashed"))
+        line(lc, lco, stroke: (dash : "dashed"))
+
+        for (l, n) in ((la, "a"), (lb, "b"), (lc, "c"), (ld, "d"), (le, "e")){
+          circle((l.at(0), l.at(1)), radius:0.3, name: n, fill: black)
+          content((l.at(0), l.at(1)), text(14pt, fill:white)[$#n$])
+        }
+        for (a, b) in (("a", "e"), ("b", "c"), ("c", "d"), ("d", "a"), ("b", "d"), ("d", "e"), ("c", "e")){
+          line(a, b)
+        }
+
+        content((-1.2, 2), text(16pt, fill:black)[$G$])
+        content((-1, 1), text(16pt, fill:black)[$R$])
+      })
+    ),
+    h(30pt),
+    table(
+      columns: (auto, auto),
+      table.header(hdl[Boundary configuration: $s_(a b c)$], hdl[Possible assignments: $s_(a b c d e)$]),
+      sl[000], sl[00010, 000#redtext(0)1],
+      sl[100], sl[100#redtext(0)0],
+      sl[010], sl[010#redtext(0)1],
+      sl[001], sl[001#redtext(0)0],
+      sl[110], sl[110#redtext(0)0],
+      sl[101], sl[101#redtext(0)0]
+    )
+  )
+)
+
+#align(center, box([Key point: No need to use all results, find the #emph[correct pattern]!], stroke: black, inset: 10pt))
+
+#pagebreak()
+
+=== The optimal branching algorithm
+
+#timecounter(1)
+
+We use the tensor network to extract the local information, and then automatically search the optimal branching rules #footnote(text(12pt)[#link("https://github.com/OptimalBranching/OptimalBranching.jl")],) @Gao2024.
+
+#align(center, image("figs/ob_rules.png", width: 600pt))
+
+
+#align(center,
+grid(
+  columns: 3,
+  text(20pt, black)[Naive branching \ 4 branches, each fix 5 variables \ $gamma^n = 4 times gamma^(n-5)$ \ $gamma approx 1.3195$],
+  h(60pt),
+  text(20pt, black)[Optimal branching \ 3 branches, fix [4, 5, 5] variables \ $gamma^n = gamma^(n-4) + 2 times gamma^(n-5)$ \ $gamma approx 1.2671$],
+)
+)
+
+#align(center, box([Question: How to solve the rules from the assignments?], stroke: black, inset: 10pt))
+
+#pagebreak()
+
+=== Finding the optimal branching rule
+
+#timecounter(1)
+
+The process of finding the optimal branching rules is as the following:
+
+#align(center, canvas({
+  import draw: *
+  content((0, 0), box([Possible assignments ${bold(s)_1, bold(s)_2, dots, bold(s)_l}$], stroke: black, inset: 10pt), name: "oracle")
+  content((0, -2.5), box([Candidate clauses $cal(C) = {c_1, c_2, dots, c_m}$], stroke: black, inset: 10pt), name: "clauses")
+  content((0, -5), box([Optimal branching rule $cal(D) = c_(k_1) or c_(k_2) or dots$], stroke: black, inset: 10pt), name: "branching")
+  line("oracle", "clauses", mark: (end: "straight"))
+  line("clauses", "branching", mark: (end: "straight"))
+}))
+
+The candidate clauses are the combinations of the possible assignments, for example, a combination of the 3rd and 4th assignments is given by:
+
+$
+  "combine"(not a and b and not c and d and not e, a and b and c and not d and not e) = b and not e
+$
+
+we say $b and not e$ covers ${3, 4}$.
+The clauses are generated iteratively.
+
+#pagebreak()
+
+=== Set covering via mixed integer programming
+
+#timecounter(1)
+
+Then we solve a set covering problem by formulating it as a mixed integer programming problem.
+
+$
+min_(gamma, bold(x)) gamma " s.t. " & sum_(i=1)^m gamma^(-Delta rho(c_i)) x_i = 1,\
+& union.big_(i = 1, dots, m\ x_i = 1) J_i = {1, 2, dots, n},  #h(50pt) arrow "valid branching rule"\
+& x_i in {0, 1} #h(161pt) arrow "a clause is selected or not"
+$
+where $rho(c_i)$ is the size reduced by the clause $c_i$ of the problem.
+
+The chosen clauses form the optimal branching rule:
+$
+  cal(D) = c_(k_1) or c_(k_2) or dots or c_(k_m)
+$
+with the minimum $gamma$ among all the possible branching rules.
+
+== Numerical results
+
+=== A bottleneck case
+
+#timecounter(1)
+
+A bottle neck case has been reported in Xiao's work @Xiao2013, with a branching factor of $1.0836$.
+
+#grid(columns: 3,
+  image("figs/ob_bottleneck.png", width: 300pt),
+  h(30pt),
+  align(horizon, text(20pt, black)[
+    - 71 possible assignments, 15782 candidate clauses. 
+    // - The optimal branching rule can be solved in few seconds.
+    - 4 branches, size reduced by branches: $[10, 16, 26, 26]$, with $gamma = 1.0817 < 1.0836$
+  ]),
+)
+
+#pagebreak()
+
+=== Benchmarks on random graphs
+#timecounter(1)
+
+#leftright(
+  grid(rows: 5,
+  text(20pt)[On-the-fly branching algorithm:],
+  v(20pt),
+  align(center,
+    canvas({
+      import draw: *
+      content((0, 0), box([Reduction by rules], stroke: black, inset: 10pt), name: "reduce")
+      content((0, -2), box([Selecting subgraph], stroke: black, inset: 10pt), name: "select")
+      content((0, -4), box([Generating branching rules], stroke: black, inset: 10pt), name: "rules")
+      content((0, -6), box([Branching], stroke: black, inset: 10pt), name: "branching")
+      // content((0, -8), ortho({on-xz({rect((-1.5,-1.5), (1.5,1.5))})}))
+
+      let ps_1 = (0, -7.5)
+      let ps_2 = (0, -9.5)
+      let ps_3 = (-2, -8.5)
+      let ps_4 = (2, -8.5)
+
+      line(ps_1, ps_3)
+      line(ps_3, ps_2)
+      line(ps_2, ps_4)
+      line(ps_4, ps_1)
+
+      content((0, -8.5), "Is solved?", stroke: black, inset: 10pt)
+
+      let point_1 = (5, -8.5)
+      let point_2 = (5, 0)
+      let point_start = (0, 1.2)
+      let point_end = (0, -7.2)
+      line("reduce", "select", mark: (end: "straight"))
+      line("select", "rules", mark: (end: "straight"))
+      line("rules", "branching", mark: (end: "straight"))
+      line(ps_4, point_1)
+      line(point_1, point_2)
+      line(point_2, "reduce.east", mark: (end: "straight"))
+      line(point_start, "reduce", mark: (end: "straight"))
+      line("branching", ps_1, mark: (end: "straight"))
+
+    })
+  ),
+  v(10pt),
+  image("figs/ob_benchmark_table.png", width: 360pt),
+  ),
+  figure(image("figs/ob_benchmark_average.png", width: 380pt), caption : [#text(15pt)[Average number of branches generated by different branching algorithms on 1000 random graphs.]])
+)
+
+== Potential applications
+
+=== Sparse Tensor Networks Contraction via Optimal Branching
+
+#timecounter(2)
+
+The optimal branching algorithm can be applied to contract the sparse tensor networks.
+// Assume that $T$ is a sparse tensor, the non-zeros values are listed as below:
+
+#align(center,
+grid(columns: 9,
+  canvas(length: 35pt, {
+    import draw: *
+    let T = (0, 0)
+    let A = (1, 0)
+    let B = (0, 1)
+    let C = (-1, 0)
+    let D = (0, -1)
+    let locs = (T, A, B, C, D)
+    let mid = (A, B, C, D).map(v => (v.at(0) * 0.5, v.at(1) * 0.5))
+    let e = ((0, 1), (0, 2), (0, 3), (0, 4))
+    let c = ((0, $T_(i j k l)$), (1, $A_(i *)$), (2, $B_(j *)$), (3, $C_(k *)$), (4, $D_(l *)$))
+    let s = 2
+    let indices = ($i$, $j$, $k$, $l$)
+    show-graph-black(locs.map(v => (v.at(0) * (s + 0.8), v.at(1) * (s + 0.8))), e, radius:0.0)
+    show-graph-black(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, radius:0.5)
+    show-graph-content(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, c, radius:0.5, fontsize: 16pt)
+    for (i, v) in mid.map(v => (v.at(0) * (s), v.at(1) * (s))).enumerate() {
+      circle(v, radius:0.3, fill:white, stroke:none)
+      content(v, text(15pt, black)[#indices.at(i)])
+    }
+  }),
+  h(20pt),
+  align(center + horizon,text(30pt)[$arrow$]),
+  h(20pt),
+  align(center + horizon,
+  canvas({
+    import draw: *
+    content((0,0), text(20pt, black)[
+      #table(
+      columns: (auto, auto),
+      inset: 8pt,
+      align: horizon,
+      table.header(hdl[$i j k l$], hdl[value]),
+      sl[#redtext(11)01], sl[0.1],
+      sl[#redtext(11)10], sl[0.2],
+      sl[#redtext(11)00], sl[0.3],
+      sl[10#bluetext(0)#bluetext(0)], sl[0.4],
+      sl[01#bluetext(0)#bluetext(0)], sl[0.5]
+      )
+    ])
+  })),
+  h(20pt),
+  align(center + horizon,text(30pt)[$arrow$]),
+  h(20pt),
+  grid(rows : 5,
+    canvas(length: 25pt, {
+      import draw: *
+      let T = (0, 0)
+      let A = (1, 0)
+      let B = (0, 1)
+      let C = (-1, 0)
+      let D = (0, -1)
+      let locs = (T, A, B, C, D)
+      let mid = (A, B, C, D).map(v => (v.at(0) * 0.5, v.at(1) * 0.5))
+      let e = ((0, 1), (0, 2), (0, 3), (0, 4))
+      let c = ((0, $T_(1 1 k l)$), (1, $A_(1 *)$), (2, $B_(1 *)$), (3, $C_(k *)$), (4, $D_(l *)$))
+      let s = 2
+      let indices = ("1", "1", $k$, $l$)
+      show-graph-black(locs.map(v => (v.at(0) * (s + 0.8), v.at(1) * (s + 0.8))), e, radius:0.0)
+      show-graph-black(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, radius:0.5)
+      show-graph-content(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, c, radius:0.5, fontsize: 10pt)
+      for (i, v) in mid.map(v => (v.at(0) * (s), v.at(1) * (s))).enumerate() {
+        circle(v, radius:0.3, fill:white, stroke:none)
+        content(v, text(10pt, black)[#indices.at(i)])
+      }
+    }),
+    v(10pt),
+    text(20pt)[$+$],
+    v(10pt),
+    canvas(length: 25pt, {
+      import draw: *
+      let T = (0, 0)
+      let A = (1, 0)
+      let B = (0, 1)
+      let C = (-1, 0)
+      let D = (0, -1)
+      let locs = (T, A, B, C, D)
+      let mid = (A, B, C, D).map(v => (v.at(0) * 0.5, v.at(1) * 0.5))
+      let e = ((0, 1), (0, 2), (0, 3), (0, 4))
+      let c = ((0, $T_(i j 0 0)$), (1, $A_(i *)$), (2, $B_(j *)$), (3, $C_(0 *)$), (4, $D_(0 *)$))
+      let s = 2
+      let indices = ($i$, $j$, $0$, $0$)
+      show-graph-black(locs.map(v => (v.at(0) * (s + 0.8), v.at(1) * (s + 0.8))), e, radius:0.0)
+      show-graph-black(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, radius:0.5)
+      show-graph-content(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, c, radius:0.5, fontsize: 10pt)
+      for (i, v) in mid.map(v => (v.at(0) * (s), v.at(1) * (s))).enumerate() {
+        circle(v, radius:0.3, fill:white, stroke:none)
+        content(v, text(10pt, black)[#indices.at(i)])
+      }
+    })
+  )
+)
+)
+
+// Such a contraction can be viewed as a branching problem, one can use the optimal branching algorithm to find the optimal way. 
+
+Such sparsity is common in many problems, including probabilistic inference, combinatorial optimization, and quantum circuit simulations @Markov2008.
+
+== Summary
+
+===
+
+#timecounter(1)
+
+A new method to automatically discover the optimal branching rules is proposed, by combining the tensor network method and the branching algorithm.
+
+With this method, we achieved an average complexity of $O(1.0441^n)$ on random 3-regular graphs, which outperforms the SOTA ($O(1.0487^n)$).
+
+Advantages:
+- generate the branching rules automatically without human effort
+- fully utlize the information of the sub-graph
+- the sub-graph can be selected flexibly
+- can be applied to different problems, not only the MIS problem
+
+Disadvantages:
+- solving the rule can be computationally expensive
+- cannot capture the rules need graph rewriting
+
+= Conclusion and Outlook
+
+// == Probabilistic inference via tensor networks
+
+// #grid(columns: 3,
+//   text(20pt)[
+//     The modern tensor network techniques are applied to solve the probabilistic inference tasks#footnote(text(12pt)[#link("https://github.com/TensorBFS/TensorInference.jl")],):
+//     - Contraction order optimization @gray2021hyper
+//     - Automatic differentiation @liao2019differentiable
+//     - Tropical tensor network @liu2023computing
+
+//     An exponential speedup is achieved for the typical inference tasks against the widely used solvers on the UAI problem set#footnote(text(12pt)[https://auai.org/uai2014/competition.shtml],).
+//   ],
+//   h(20pt),
+//   figure(
+//     image("figs/ti_benchmark.png", height: 330pt),
+//     caption: [#text(15pt)[Speedup of the inference tasks against the previous solvers.]],
+//   )
+// )
+
+// #pagebreak()
+
+// A custom GPU kernel#footnote(text(12pt)[Code: #link("https://github.com/TensorBFS/CuTropicalGEMM.jl"). Blog: #link("https://arrogantgao.github.io/blogs/CuTropicalGEMM/")],) for tropical matrix multiplication is implemented to accelerate the inference. It can achieve a 4000x speedup for tropical mat-mul compared to CPU.
+
+// #grid(columns: 3,
+//   figure(
+//     image("figs/cutropicalgemm.png", height: 280pt),
+//     caption: [#text(15pt)[Benchmark of the custom GPU kernel for tropical matrix multiplication.]],
+//   ),
+//   h(20pt),
+//   figure(
+//     image("figs/ti_gpu.png", height: 280pt),
+//     caption: [#text(15pt)[Speedup of the MMAP inference tasks by GPU againist the CPU version.]],
+//   )
+// )
+
+// #pagebreak()
+
+// == Conclusion
+
+// Some conclusions.
+
+#pagebreak()
+
+== Software packages
+#timecounter(2)
+
+=== Molecular Dynamics and Fast Summation Algorithms
+
+- *ExTinyMD.jl*: A simple framework for MD simulation.
+- *EwaldSummations.jl*: Various Ewald summation methods with parallelization.
+- *ChebParticleMesh.jl*: Toolkits for smooth particle mesh (type-1 and type-2 NUFFT).
+- *FastSpecSoG.jl*: Implementation of the fast spectral SOG method.
+
+\
+
+=== Tensor Network Algorithms
+
+- *TreeWidthSolver.jl*: Solving the treewidth problem (supported by GSoC 2024).
+- *OMEinsumContractionOrders.jl*: Optimizing the contraction order for TN contraction.
+- *CuTropicalGEMM.jl*: Custom GPU kernel for tropical matrix multiplication (supported by OSPP 2023).
+- *OptimalBranching.jl*: Implementation of the optimal branching algorithm.
+
+#pagebreak()
+
+== Future Research Plans
+#timecounter(2)
+
+=== Fast Summation Algorithms
+
+- efficient methods based on the DMK framework @greengard2023dual
+
+\
+
+=== Tensor Network Algorithms
+
+// With the advanced tensor network techniques, I am interested in exploring more flexible tensor network structures as ansatz, which may yield more accurate representations of quantum many-body states.
+
+// I am also interested in developing efficient algorithms for evolving these states by integrating them with the Dirac–Frenkel/McLachlan variational principle @raab2000dirac, the automatic differentiation and proper pre-conditioning @ganahl2017continuous.
+
+- branching based sparse tensor network contraction
+- more flexible quantum many-body ansatz
+// - proper pre-conditioning @ganahl2017continuous
+
+
+// I am keen on developing efficient summation methods for long-range interacting systems, such as those described by Poisson’s equation and the Helmholtz equation. For example, I am interested in extending the recently introduced dual-space multilevel kernel-splitting (DMK) @jiang2023dmk framework to a variety of long-range interactions and systems with periodic/partially periodic boundary conditions.
+
+#pagebreak()
+
+== Acknowledgements
+#timecounter(1)
+
+#let figsize = 130pt
+
+#align(center,
+grid(columns: 5, 
+  grid(rows : 3, image("photos/zechenggan.jpeg", width : figsize), "" ,  text[Prof. Zecheng Gan \ HKUST(GZ)]),
+  h(50pt), 
+  grid(rows : 3, image("photos/zhenlixu.jpg", width : figsize), "" ,  text[Prof. Zhenli Xu \ SJTU]),
+  h(50pt), 
+  grid(rows : 3, image("photos/shidongjiang.jpeg", width : figsize), "" ,  text[Prof. Shidong Jiang \ CCM]),
+  )
+)
+
+#align(center,
+grid(columns: 3, 
+  grid(rows : 3, image("photos/jinguoliu.jpeg", width : figsize), "" ,  text[Prof. Jinguo Liu, \ HKUST(GZ)]),
+  h(60pt), 
+  grid(rows : 3, image("photos/panzhang.jpeg", width : figsize), "" ,  text[Prof. Pan Zhang, \ ITP, CAS]),
+  )
+)
+
+Also thank Jiuyang Liang (SJTU & CCM), Qi Zhou (SJTU), and Yijia Wang (ITP, CAS) for collaboration.
+
+#focus-slide[
+  Thank you for your attention!
+]
+
+#show: appendix
+
+= Appendix <touying:unoutlined>
+
+#pagebreak()
+
+== Einsum notation
+
+Tensor networks can be represented as the so called Einsum notation:
+$
+  Y_(i_y ...) = sum_(i in.not {i_y ...}) A_(i_a ...) B_(i_b ...) C_(i_c ...) ...
+$
+
+It also has a hyper-graph representation, where each node is a tensor and each edge is an index:
+
+#align(center,
+// grid(columns: 3,
+// align(horizon,
+// $
+//   
+// $),
+// h(50pt),
+align(center, canvas(length:40pt, {
+  import draw: *
+  content((-7, 1.2), text(20pt)[$s = sum_(i, j, k, l) A_(i j) B_(j k) C_(k l) D_(l i) E_(i) F_(j) G_(k) H_(l)$])
+
+  content((-2, 1.3), text(30pt)[$arrow$])
+
+  // petersen graph
+  let vertices1 = ((0, 0), (5, 0), (5, 5), (0, 5))
+  let edges = ((0, 1), (1, 2), (2, 3), (3, 0))
+
+  show-graph((vertices1).map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1)))), edges, radius:0.0)
+
+  let vertices3 = ((0, 0), (5, 0), (5, 5), (0, 5), (-1.5, -1.5), (6.5, -1.5), (6.5, 6.5), (-1.5, 6.5))
+  let edges3 = ((0, 4), (1, 5), (2, 6), (3, 7))
+  show-graph((vertices3).map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1)))), edges3, radius:0.0)
+  // 
+  let indices = ("i", "l", "k", "j")
+  for (i, v) in (vertices1.map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1))))).enumerate() {
+    circle(v, radius:0.3, fill:white, stroke:none)
+    content(v, text(20pt, black)[#(indices.at(i))])
+  }
+
+  let vertices2 = ((2.5, 0), (5, 2.5), (2.5, 5), (0, 2.5), (-1.5, -1.5), (6.5, -1.5), (6.5, 6.5), (-1.5, 6.5))
+  let edges2 = ()
+  show-graph-content((vertices2).map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1)))), edges2, ((0, "D"), (1, "C"), (2, "B"), (3, "A"), (4, "E"), (5, "H"), (6, "G"), (7, "F")), radius:0.4, fontsize:20pt)
+}))
+)
+
+#pagebreak()
+
+== Contraction order
+
+// To extract information from the tensor network, we need to contract them, i.e. sum over the indices.
+// A naive way is to loop over all indices directly. However, in this way the cost grows exponentially with the number of indices.
+
+// In practice, we prefer to do binary contraction, i.e. contracting two tensors at a time so that BLAS can be utilized. The resulting order can be represented as a binary tree.
+// The contraction order is only related to the structure of the tensor network, and is independent of the data.
+
+A contraction order can be represented as a rooted (binary) tree:
+
+#figure(
+align(center, canvas(length:40pt, {
+  import draw: *
+  set-origin((4, 0.35))
+  let DY = 1
+  let DX1 = 2.5
+  let DX2 = 1.2
+  let DX3 = 0.7
+  let root = (0, DY)
+  let left = (-DX1, 0)
+  let right = (DX1, 0)
+  let left_left = (-DX1 - DX2, -DY)
+  let left_right = (-DX1 + DX2, -DY)
+  let right_left = (DX1 - DX2, -DY)
+  let right_right = (DX1 + DX2, -DY)
+
+  let left_left_left = (-DX1 - DX2 - DX3, -2*DY)
+  let left_left_right = (-DX1 - DX2 + DX3, -2*DY)
+  let left_right_left = (-DX1 + DX2 - DX3, -2*DY)
+  let left_right_right = (-DX1 + DX2 + DX3, -2*DY)
+  let right_left_left = (DX1 - DX2 - DX3, -2*DY)
+  let right_left_right = (DX1 - DX2 + DX3, -2*DY)
+  let right_right_left = (DX1 + DX2 - DX3, -2*DY)
+  let right_right_right = (DX1 + DX2 + DX3, -2*DY)
+
+  for (a, b) in ((root, left), (root, right), (left, left_left), (left, left_right), (right, right_left), (right, right_right), (left_left, left_left_left), (left_left, left_left_right), (left_right, left_right_left), (left_right, left_right_right), (right_left, right_left_left), (right_left, right_left_right), (right_right, right_right_left), (right_right, right_right_right)){
+    line(a, b)
+  }
+
+  for (l, t) in ((left_left_left, [$A_(i j)$]), (left_left_right, [$E_i$]), (left_right_left, [$B_(j k)$]), (left_right_right, [$F_k$]), (right_left_left, [$C_(k l)$]), (right_left_right, [$G_k$]), (right_right_left, [$D_(l i)$]), (right_right_right, [$H_l$])){
+    circle(l, radius:0.4, fill: black)
+    content(l, text(15pt, white)[#t])
+  }
+
+})),
+caption: [An example of binary contraction tree.],
+)
+
+Different contraction orders can lead to different complexities, the order with the minimum complexity is called the optimal contraction order.
+
+#pagebreak()
+
+== Optimizing the contraction order
+
+Finding the optimal contraction order is a NP-hard#footnote(text(12pt)[I.L. Markov, Y. Shi, SIAM J. Comput. 38, 963–981 (2008).],) problem! 
+// However, it is lucky that we are always satisfied with a good enough solution, thus heuristic methods are sufficient in practice.
+
+In the past few years, tools have been developed to optimize the contraction order:
+- OMEinsumContractionOrder.jl#footnote(text(12pt)[#link("https://github.com/TensorBFS/OMEinsumContractionOrder.jl")],) in Julia
+- Cotengra#footnote(text(12pt)[#link("https://github.com/jcmgray/cotengra")],) in Python
+
+#figure(
+  image("figs/tn_order.png", width: 280pt),
+  caption: [Comparison of different contraction orders.],
+)
+
+#pagebreak()
+
+== Tropical Tensor Network
+
+In tropical semiring, the multiplication and addition are defined as:
+$
+  a times.circle b &= a + b \ a plus.circle b &= max(a, b)
+$
+
+By replacing the matrix multiplication with the tropical matrix multiplication, we get the tropical TN, where the contraction results:
+$
+  T_(i_y ...) = max_(i in.not {i_y ...}) (A_(i_a ...) + B_(i_b ...) + C_(i_c ...) + ...)
+$
+which is the maximum of the sum of the elements among all the possible assignments.
+
+Very useful in combinatorial optimization problems and ground state search.
+
+#pagebreak()
+
+== Tensor Network for Maximum Independent Set Problem
+
+A tropical TN can be used to solve the MIS problem, a simple example is shown below:
+
+#align(center, 
+  grid(columns: 5,
+  align(center + horizon, align(center, canvas({
+  import draw: *
+  for (loc, name, color) in (((0, 0), "a", black), ((0, 3), "b", black), ((3, 0), "d", black), ((3, 3), "c", black), ((5, 1.5), "e", black)) {
+    circle(loc, radius:0.5, name: name, stroke: color)
+    content(loc, [$#name$])
+  }
+  for (a, b) in (
+    ("a", "b"),
+    ("a", "d"),
+    ("a", "c"),
+    ("c", "d"),
+    ("b", "c"),
+    ("c", "e"),
+    ) {
+    line(a, b)
+  }
+}))),
+h(30pt),
+align(center + horizon, text(50pt)[$arrow$]),
+h(30pt),
+image("figs/tn_mis.png", width: 300pt),
+)
+)
+
+// #align(center, canvas(length:40pt, {
+//   import draw: *
+//   // petersen graph
+//   let vertices1 = ((0, 0), (5, 0), (5, 5), (0, 5))
+//   let edges = ((0, 1), (1, 2), (2, 3), (3, 0))
+//   show-graph((vertices1).map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1)) + 1.24)), edges, radius:0.1)
+//   // content((2.5, -1.5), text(16pt)[(a)])
+
+//   content((4, 2.5), text(30pt)[$arrow$])
+
+//   set-origin((6, 1.25))
+//   show-graph((vertices1).map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1)))), edges, radius:0.0)
+
+//   let vertices3 = ((0, 0), (5, 0), (5, 5), (0, 5), (-1.5, -1.5), (6.5, -1.5), (6.5, 6.5), (-1.5, 6.5))
+//   let edges3 = ((0, 4), (1, 5), (2, 6), (3, 7))
+//   show-graph((vertices3).map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1)))), edges3, radius:0.0)
+//   // 
+//   for (i, v) in (vertices1.map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1))))).enumerate() {
+//     circle(v, radius:0.3, fill:white, stroke:none)
+//     content(v, text(20pt, black)[#(4 - i)])
+//   }
+
+//   let vertices2 = ((2.5, 0), (5, 2.5), (2.5, 5), (0, 2.5), (-1.5, -1.5), (6.5, -1.5), (6.5, 6.5), (-1.5, 6.5))
+//   let edges2 = ()
+//   show-graph-content((vertices2).map(v=>(0.5 * (v.at(0)), 0.5 * (v.at(1)))), edges2, ((0, "B"), (1, "B"), (2, "B"), (3, "B"), (4, "W"), (5, "W"), (6, "W"), (7, "W")), radius:0.4, fontsize: 20pt)
+
+//   // content((1.25, -2.75), text(16pt)[(b)])
+// }))
+
+with 
+$
+  B = mat(
+    0, 0;
+    0, -infinity;
+  ), " and " 
+  W = mat(
+    0;
+    1;
+  )
+$
+under a tropical semiring.
+
+#pagebreak()
+
+== Solving the set covering problem via Mixed Integer Linear Programming
+
+In the original set covering problem, the function to be optimized is not linear. We solve it iteratively.
+
+Fixed the branching complexity $gamma$, find a solution to $x$ that satisfies
+$
+min_(x) sum_(i=1)^(|cal(C)|) gamma^(-Delta rho(c_i)) x_i,  "s.t." union.big_(i = 1, dots, |cal(D)|,\ x_i = 1) J_i = {1, 2, dots, |cal(S)_R|}
+$
+It corresponds to the following WMSC problem:
+$
+cases(
+"Alphabet:" {1, 2, dots, |cal(S)_R|},
+"Sets:" {J_1, J_2, dots, J_(|cal(C)|)},
+"Weights:" i arrow.r.bar gamma^(-Delta rho(c_i))
+)
+$
+After each iteration, the branching complexity $gamma$ is updated, coverge in a few iterations.
+
+#pagebreak()
+
+== Solving the set covering problem via Mixed Integer Linear Programming
+
+#figure(
+  image("figs/ob_iterate.png", width: 500pt),
+  caption: [#text(15pt)[An example of solving the set covering problem via iterative MIP.]],
+)
+
+#pagebreak()
+
+== The branching algorithm used in benchmark
+
+#let s(name) = table.cell(align(center + horizon, text(16pt)[#name]))
+#align(center,
+table(
+    columns: (150pt, auto, auto, auto),
+    table.header(
+    bdiagbox(s[Reduction], s[Branching], width:150pt), s[Optimal Branching \ (this work)], s[Xiao 2013], s[Akiba 2015],
+    ),
+    s[d1/d2 reduction], s[ob], s[-], s[akiba2015],
+    s[d1/d2 reduction\ Xiao's rules], s[ob+xiao], s[xiao2013], s[-],
+    s[d1/d2 reduction\ Xiao's rules\ packing rule], s[-], s[-], s[akiba2015+xiao&packing],
+))
+
+#pagebreak()
+
+== Benchmarks for the worst-case complexity
+
+#figure(
+  image("figs/ob_benchmark_worst.png", width: 500pt),
+  caption: [#text(15pt)[The worst-case complexity of the proposed method on random graphs.]],
+)
+
+#pagebreak()
+
+== References
+
+#bibliography("ref.bib", style: "apa", title: none)
