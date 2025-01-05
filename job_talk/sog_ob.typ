@@ -91,7 +91,7 @@
 
 #pagebreak()
 
-=== Doubly periodic systems
+=== Quasi-2D charged systems
 
 #timecounter(1)
 
@@ -99,23 +99,27 @@ Quasi-2D systems @mazars2011long are at the macroscopic scale in $x y$, but micr
 // Q2D systems are widely exist in nature and engineering, for example, cell membranes and electrolyte near surfaces.
 
 #figure(
-  image("figs/Q2D.png", width: 600pt),
-  caption: [Illustration of a doubly periodic system.],
+  image("figs/Q2D.png", width: 400pt),
+  caption: [Illustration of a quasi-2D charged system.],
 )
 
-#pagebreak()
-=== Coulomb interaction
+Coulomb interaction plays a key role in nature, leading to effect such as ion transportation and self-assembly @luijten2014.
 
-#timecounter(1)
+However, the Coulomb interaction decays as $r^(-1)$ in 3D, so that it is long ranged and singular at $r=0$, which make such simulation computationally expensive.
 
-Coulomb interaction plays a key role in nature, leading to effect such as ion transportation and self-assembly.
+// #pagebreak()
+// === Coulomb interaction
 
-#figure(
-  image("figs/self-assembly.png", width: 450pt),
-  caption: [Self-assembly of nanoparticles via Coulomb interaction @luijten2014.
-],)
+// #timecounter(1)
 
-However, the Coulomb interaction decays as $r^(-1)$ in 3D, so that is long ranged and singular at $r=0$, which make such simulation computationally expensive.
+// Coulomb interaction plays a key role in nature, leading to effect such as ion transportation and self-assembly.
+
+// #figure(
+//   image("figs/self-assembly.png", width: 450pt),
+//   caption: [Self-assembly of nanoparticles via Coulomb interaction @luijten2014.
+// ],)
+
+// However, the Coulomb interaction decays as $r^(-1)$ in 3D, so that is long ranged and singular at $r=0$, which make such simulation computationally expensive.
 // Complexity of a direct sum of the Coulomb interaction in doubly periodic systems is about $O(N^2 epsilon^(-1/3))$.
 
 #pagebreak()
@@ -125,25 +129,32 @@ However, the Coulomb interaction decays as $r^(-1)$ in 3D, so that is long range
 
 Methods have been developed to accelerate the Coulomb interaction in Q2D systems.
 
-The very first method is the Ewald2D#footnote(text(12pt)[David E. Parry, Surf. Sci. 49 (1975), no. 2, 433–440.],) method based on the Ewald splitting of the Coulomb kernel. It is accurate but with $O(N^2)$ complexity.
+The very first method is the Ewald2D @parry1975electrostatic method based on the Ewald splitting of the Coulomb kernel. It is accurate but with $O(N^2)$ complexity.
 
-To reduce the complexity, most methods rely on the following two strategies:
+To reduce the complexity, most methods rely on the following three strategies:
 
-- Fourier spectral methods#footnote(text(12pt)[Ondrej Maxian, Rau´l P. Pel´aez, Leslie Greengard, and Aleksandar Donev, J. Chem. Phys. 154 (2021), no. 20, 204107.],) #footnote(text(12pt)[Franziska Nestler, Michael Pippig, and Daniel Potts, J. Comput. Phys. 285 (2015), 280–315.],) #footnote(text(12pt)[Davoud Saffar Shamshirgar, Joar Bagge, and Anna-Karin Tornberg, J. Chem. Phys. 154 (2021), no. 16, 164109.],): based on Ewald splitting and fast Fourier transform (FFT), with $O(N log N)$ complexity.
+- *Fourier spectral method* @lindbo2011spectral @lindbo2012fast @nestler2015fast @shamshirgar2017spectral @shamshirgar2021fast @maxian2021fast: based on Ewald splitting and fast Fourier transform (FFT), with $O(N log N)$ complexity.
 
-- Fast multipole methods#footnote(text(12pt)[Jiuyang Liang, Jiaxing Yuan, Erik Luijten, and Zhenli Xu, J. Chem. Phys. 152 (2020), no. 13, 134109.],) #footnote(text(12pt)[Ruqi Pei, Travis Askham, Leslie Greengard, and Shidong Jiang, J. Comp. Phys. 474 (2023), 111792.],) #footnote(text(12pt)[Wen Yan and Michael Shelley, J. Comput. Phys. 355 (2018), 214–232.],): based on the multipole expansion of the Coulomb kernel, with $O(N)$ complexity.
+- *Fast multipole methods* @greengard1987fast @yan2018flexibly @liang2020harmonic @liang2022hsma @jiang2023jcp: accelerated by hierarchical low-rank compression, adaptive and with $O(N)$ complexity.
+
+- *Random batch Ewald* @gan2024fast @gan2024random @Jin2020SISC: based on Ewald splitting and random batch sampling, stochastic and with $O(N)$ complexity.
 
 #pagebreak()
 
 === Algorithms for Q2D charged systems
 #timecounter(1)
 
-For doubly periodic systems, one major challenge is the large prefactor in $O(N)$ or $O(N log N)$ compared to 3D-PBC solvers, especially when the system is strongly confined in the $z$ direction, i.e., $L_z << L_x, L_y$.
+For doubly periodic systems, one major challenge is the large prefactor in $O(N)$ or $O(N log N)$ compared to 3D-PBC solvers @mazars2011long, especially when the system is strongly confined in the $z$ direction, i.e., $L_z << L_x, L_y$.
 
-For the FFT based methods, the singularity introduced by the Laplacian in the Fourier integral along the free direction leads to huge additional zero-padding#footnote(text(12pt)[Ondrej Maxian, Rau´l P. Pel´aez, Leslie Greengard, and Aleksandar Donev, J. Chem. Phys. 154 (2021), no. 20, 204107.],).
+- For the FFT based methods, huge zero-padding in $z$ is required @maxian2021fast.
 
-For the FMM based methods, more near field contributions is included#footnote(text(12pt)[Wen Yan and Michael Shelley, J. Comput. Phys. 355 (2018), 214–232.],).
+- For the FMM based methods, more near field contributions is included @yan2018flexibly.
 
+The recently developed methods including 
+- Anisotropic truncation kernel method @greengard2018anisotropic
+- Periodic FMM @jiang2023jcp
+- Dual-space multilevel kernel-splitting method @greengard2023dual
+offer potential solutions to this challenge, but these methods have not yet been extended to handle quasi-2D systems.
 
 == The algorithm
 
@@ -156,12 +167,15 @@ $
   1 / r approx (2 log b) / sqrt(2 pi sigma^2) sum_(l = - infinity)^(infinity) 1 / (b^l) e^(- r^2 / (sqrt(2) b^l sigma)^2), " with" cal(E)_r < 2 sqrt(2) e^(- pi^2 / (2 log b))
 $
 
-Then we can split the potential into three parts:
+Based on that, the u-series decomposition @DEShaw2020JCP splits the potential into three parts:
 $
   1 / r approx underbrace(( 1 / r - sum_(l = 0)^M w_l e^(- r^2 / s_l^2)) bb(1)_(r < r_c), "near-field")+ underbrace(sum_(l = 0)^m w_l e^(- r^2 / s_l^2), "mid-range") + underbrace(sum_(l = m + 1)^M w_l e^(- r^2 / s_l^2), "long-range")
 $
-where $s_l$ and $w_l$ are the nodes and weights of the SOG approximation.
-// The nodes $s_l$ are arranged in monotone increasing order with $s_M >> L_x, L_y$, and $r_c$ is the cutoff radius to balance the near-field and far-field contributions.
+The weight of the narrowest Gaussian is modified to be
+$
+  w_0 = omega (2 log b) / (sqrt(2 pi sigma^2))
+$
+to enforce the $C^0$ and $C^1$ continuity of the near-field potential at $r = r_c$, which is important for MD simulations @shamshirgar2019regularizing.
 
 // #pagebreak()
 
@@ -192,7 +206,35 @@ Selecting $m$ so that $s_m < eta L_z < s_(m+1)$, where $eta$ is $O(1)$ constant.
 
 #timecounter(1)
 
-The mid-range potential is computed by a standard Fourier spectral solver with little zero padding and no upsampling.
+The mid-range potential is computed by a standard Fourier spectral solver #footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],) (type-1 and type-2 NUFFT in 3D @barnett2019parallel) with little zero padding.
+$
+  Phi_("mid")^l (arrow(r)) = sum_(arrow(n)) sum_(j = 1)^N q_j w_l e^(- (arrow(r) - arrow(r)_j + arrow(n) circle arrow(L))^2 / s_l^2), quad s_l < eta L_z
+$
+
+#align(center, canvas({
+  import draw: *
+  let box_loc = 3.5
+  let box_1 = (-2 * box_loc, 0)
+  let box_2 = (-box_loc, 0)
+  let box_3 = (0, 0)
+  let box_4 = (box_loc, 0)
+  let box_5 = (2 * box_loc, 0)
+
+  content(box_1, box(text(15pt)[Gridding], stroke: black, inset: 10pt), name: "box1")
+  content(box_2, box(text(15pt)[FFT], stroke: black, inset: 10pt), name: "box2")
+  content(box_3, box(text(15pt)[Scaling], stroke: black, inset: 10pt), name: "box3")
+  content(box_4, box(text(15pt)[IFFT], stroke: black, inset: 10pt), name: "box4")
+  content(box_5, box(text(15pt)[Gathering], stroke: black, inset: 10pt), name: "box5")
+
+  line("box1", "box2", mark: (end: "straight"))
+  line("box2", "box3", mark: (end: "straight"))
+  line("box3", "box4", mark: (end: "straight"))
+  line("box4", "box5", mark: (end: "straight"))
+}))
+
+
+- The smoothness and separability of the Gaussian removes the need of the kernel truncation in the free direction.
+- Fourier transform of the Gaussian decays quickly and it compensates the loss of accuracy in calculating the Fourier transform of the data, no upsampling is needed.
 
 #pagebreak()
 
@@ -200,7 +242,51 @@ The mid-range potential is computed by a standard Fourier spectral solver with l
 
 #timecounter(1)
 
-The long-range potential is computed by a Fourier-Chebyshev solver with $O(1)$ number of Chebyshev points.
+The long-range potential is computed by a Fourier-Chebyshev solver.
+$
+  Phi_("long")^l (arrow(r)) = sum_(arrow(n)) sum_(j = 1)^N q_j w_l e^(- (arrow(r) - arrow(r)_j + arrow(n) circle arrow(L))^2 / s_l^2), quad s_l > eta L_z
+$
+
+The extremely smooth long-range Gaussians are interpolate on the Chebyshev proxy points in $z$, similar to that of the periodic FMM @jiang2023jcp, and only $O(1)$ number of Chebyshev points are required.
+
+Then 2D NUFFT can be used to evaluate the potential on a tensor-product grid.
+
+#align(center, canvas({
+  import draw: *
+  let box_loc = 6
+  let box_1 = (-box_loc, 0)
+  let box_2 = (0, 0)
+  let box_3 = (box_loc, 0)
+
+  content(box_1, box(text(15pt)[Chebyshev interpolation], stroke: black, inset: 10pt), name: "box1")
+  content(box_2, box(text(15pt)[2D NUFFT], stroke: black, inset: 10pt), name: "box2")
+  content(box_3, box(text(15pt)[Evaluating polynomial], stroke: black, inset: 10pt), name: "box3")
+
+  line("box1", "box2", mark: (end: "straight"))
+  line("box2", "box3", mark: (end: "straight"))
+
+}))
+
+In cubic systems, $L_x ~ L_y ~ L_z$, $O(1)$ Fourier modes in $x y$ and $O(1)$ Chebyshev points in $z$, no need for NUFFT.
+
+#pagebreak()
+
+=== Complexity
+
+#timecounter(1)
+
+Using DFT for long-range potential, the complexity is
+$
+  O"("underbrace(4 pi r_c^3 rho_r N, "near-field") + underbrace(cal(P)_x cal(P)_y cal(P)_z N + (lambda_z (1 + delta / L_z)) / (r_c^3 rho_r) N log N, "mid-range by 3D-NUFFT") + underbrace((P L_x L_y) / (eta^2 L_z^2) N, "long-range by DFT") ")"
+$
+where $cal(P)_x, cal(P)_y, cal(P)_z$ are the window supports, $lambda_z$ is the padding ratio, $delta$ is the extended length of the box in the free direction to accommodate the support of the window function, $P$ is the number of Chebyshev points.
+By taking $r_c ~ O(1)$ and assume $L_z ~ O(sqrt(L_x L_y))$, the complexity is $O(N log N)$.
+
+Using 2D-NUFFT for long-range potential, the complexity is
+$
+  O"("underbrace(4 pi r_c^3 rho_r N, "near-field") + underbrace(cal(P)_x cal(P)_y cal(P)_z N + (lambda_z (1 + delta / L_z)) / (r_c^3 rho_r) N log N, "mid-range by 3D-NUFFT") + underbrace(cal(P)_x cal(P)_y P N +  (P L_x L_y) / (s_(m + 1)^2) N log N, "long-range by 2D-NUFFT") ")"
+$
+which is needed when $L_z << L_x, L_y$, the total complexity is also $O(N log N)$.
 
 == Numerical results
 
@@ -211,7 +297,7 @@ The method #footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.j
 - Strongly confined systems with fixed $L_z$ and surface density.
 
 #figure(
-  leftright(image("figs/sog_benchmark.png", width: 370pt), image("figs/sog_benchmark.png", width: 370pt)),
+  image("figs/sog_benchmark.png", width: 370pt),
   caption: [#text(15pt)[Error and time cost for the SOG method in the (a,c) cubic and (b,d) strongly confined systems.]],
 )
 
@@ -229,8 +315,8 @@ A fast and accurate solver for Q2D charged systems is developed based on the sum
 
 It has the following advantages:
 - spectrally accurate with rigorous error analysis
-- not sensitive to the aspect ratio of the system
-- smoothness and separability of the Gaussian removes the need of kernel truncation in the free direction
+// - not sensitive to the aspect ratio of the system
+- need little/no zero-padding for systems that are confined in a rectangular box of high aspect ratio
 - does not require any upsampling in the gridding step
 - all calculations are carried out in the fundamental cell itself
 - easy to be implemented and parallelized for large-scale MD simulations
@@ -351,7 +437,7 @@ table(
   s[1977], s[$O^*(1.2600^n)$], s[@Tarjan1977], s[],
   s[1986], s[$O^*(1.2346^n)$], s[@Jian1986], s[],
   s[1986], s[$O^*(1.2109^n)$], s[@Robson1986], s[],
-  s[1999], s[$O^*(1.0823^m)$], s[@Beigel1999], s[],
+  s[1999], s[$O^*(1.0823^m)$], s[@Beigel1999], s[num of edges],
   s[2001], s[$O^*(1.1893^n)$], s[@Robson2001], s[],
   s[2003], s[$O^*(1.1254^n)$ for 3-MIS], s[@Chen2003], s[],
   s[2005], s[$O^*(1.1034^n)$ for 3-MIS], s[@Xiao2005], s[],
@@ -569,9 +655,9 @@ The process of finding the optimal branching rules is as the following:
 
 #align(center, canvas({
   import draw: *
-  content((0, 0), box([Possible assignments ${bold(s)_1, bold(s)_2, dots, bold(s)_l}$], stroke: black, inset: 10pt), name: "oracle")
-  content((0, -2.5), box([Candidate clauses $cal(C) = {c_1, c_2, dots, c_m}$], stroke: black, inset: 10pt), name: "clauses")
-  content((0, -5), box([Optimal branching rule $cal(D) = c_(k_1) or c_(k_2) or dots$], stroke: black, inset: 10pt), name: "branching")
+  content((0, 0), box(text(15pt)[Possible assignments ${bold(s)_1, bold(s)_2, dots, bold(s)_l}$], stroke: black, inset: 10pt), name: "oracle")
+  content((0, -2.5), box(text(15pt)[Candidate clauses $cal(C) = {c_1, c_2, dots, c_m}$], stroke: black, inset: 10pt), name: "clauses")
+  content((0, -5), box(text(15pt)[Optimal branching rule $cal(D) = c_(k_1) or c_(k_2) or dots$], stroke: black, inset: 10pt), name: "branching")
   line("oracle", "clauses", mark: (end: "straight"))
   line("clauses", "branching", mark: (end: "straight"))
 }))
@@ -591,7 +677,7 @@ The clauses are generated iteratively.
 
 #timecounter(1)
 
-Then we solve a set covering problem by formulating it as a mixed integer programming problem.
+Then we solve a set covering problem by formulating it as a mixed integer programming problem, which can be solved by MIP solvers @Achterberg2009.
 
 $
 min_(gamma, bold(x)) gamma " s.t. " & sum_(i=1)^m gamma^(-Delta rho(c_i)) x_i = 1,\
@@ -636,10 +722,10 @@ A bottle neck case has been reported in Xiao's work @Xiao2013, with a branching 
   align(center,
     canvas({
       import draw: *
-      content((0, 0), box([Reduction by rules], stroke: black, inset: 10pt), name: "reduce")
-      content((0, -2), box([Selecting subgraph], stroke: black, inset: 10pt), name: "select")
-      content((0, -4), box([Generating branching rules], stroke: black, inset: 10pt), name: "rules")
-      content((0, -6), box([Branching], stroke: black, inset: 10pt), name: "branching")
+      content((0, 0), box(text(15pt)[Reduction by rules], stroke: black, inset: 10pt), name: "reduce")
+      content((0, -2), box(text(15pt)[Selecting subgraph], stroke: black, inset: 10pt), name: "select")
+      content((0, -4), box(text(15pt)[Generating branching rules], stroke: black, inset: 10pt), name: "rules")
+      content((0, -6), box(text(15pt)[Branching], stroke: black, inset: 10pt), name: "branching")
       // content((0, -8), ortho({on-xz({rect((-1.5,-1.5), (1.5,1.5))})}))
 
       let ps_1 = (0, -7.5)
@@ -652,12 +738,12 @@ A bottle neck case has been reported in Xiao's work @Xiao2013, with a branching 
       line(ps_2, ps_4)
       line(ps_4, ps_1)
 
-      content((0, -8.5), "Is solved?", stroke: black, inset: 10pt)
+      content((0, -8.5), text(15pt)[Is solved?], stroke: black, inset: 10pt)
 
       let point_1 = (5, -8.5)
       let point_2 = (5, 0)
       let point_start = (0, 1.2)
-      let point_end = (0, -7.2)
+      let point_end = (0, -10.0)
       line("reduce", "select", mark: (end: "straight"))
       line("select", "rules", mark: (end: "straight"))
       line("rules", "branching", mark: (end: "straight"))
@@ -666,6 +752,7 @@ A bottle neck case has been reported in Xiao's work @Xiao2013, with a branching 
       line(point_2, "reduce.east", mark: (end: "straight"))
       line(point_start, "reduce", mark: (end: "straight"))
       line("branching", ps_1, mark: (end: "straight"))
+      line(ps_2, point_end, mark: (end: "straight"))
 
     })
   ),
@@ -851,9 +938,9 @@ Disadvantages:
 == Software packages
 #timecounter(2)
 
-=== Molecular Dynamics and Fast Summation Algorithms
+=== Fast Summation Algorithms
 
-- *ExTinyMD.jl*: A simple framework for MD simulation.
+// - *ExTinyMD.jl*: A simple framework for MD simulation.
 - *EwaldSummations.jl*: Various Ewald summation methods with parallelization.
 - *ChebParticleMesh.jl*: Toolkits for smooth particle mesh (type-1 and type-2 NUFFT).
 - *FastSpecSoG.jl*: Implementation of the fast spectral SOG method.
@@ -863,8 +950,8 @@ Disadvantages:
 === Tensor Network Algorithms
 
 - *TreeWidthSolver.jl*: Solving the treewidth problem (supported by GSoC 2024).
-- *OMEinsumContractionOrders.jl*: Optimizing the contraction order for TN contraction.
 - *CuTropicalGEMM.jl*: Custom GPU kernel for tropical matrix multiplication (supported by OSPP 2023).
+- *OMEinsumContractionOrders.jl*: Optimizing the tensor network contraction order.
 - *OptimalBranching.jl*: Implementation of the optimal branching algorithm.
 
 #pagebreak()
@@ -925,6 +1012,62 @@ Also thank Jiuyang Liang (SJTU & CCM), Qi Zhou (SJTU), and Yijia Wang (ITP, CAS)
 #show: appendix
 
 = Appendix <touying:unoutlined>
+
+#pagebreak()
+
+== The U-series and its derivative
+
+#figure(
+  image("figs/nearfield.svg", width: 800pt),
+  caption: [The U-series and its derivative, $r_c = 10.0$.],
+)
+
+#pagebreak()
+
+== SOG parameters
+
+#align(center, image("figs/sog_table.png", width: 500pt))
+
+#figure(
+  image("figs/sog_totalerror.png", width: 500pt),
+  caption: [U-series parameters and the error],
+)
+
+#pagebreak()
+
+== Window function
+
+#figure(
+  image("figs/sog_3dnufft.png", width: 800pt),
+  caption: [Different window functions.],
+)
+
+#pagebreak()
+
+== Zero-padding
+
+#figure(
+  image("figs/sog_zeropadding.png", width: 800pt),
+  caption: [Zero-padding.],
+)
+
+#pagebreak()
+
+== Chebyshev interpolation
+
+#figure(
+  image("figs/sog_cheb.png", width: 800pt),
+  caption: [Accuracy of the Fourier-Chebyshev solver.],
+)
+
+#pagebreak()
+
+== Strongly confined systems
+
+#figure(
+  image("figs/sog_thin.png", width: 500pt),
+  caption: [Strongly confined systems.],
+)
 
 #pagebreak()
 
