@@ -314,7 +314,8 @@ The method #footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.j
 
 #timecounter(1)
 
-A fast and accurate solver for Q2D charged systems is developed based on the sum-of-Gaussian approximation of the Coulomb kernel and kernel splitting, which can be regarded as a 2-level DMK method @greengard2023dual.
+A fast and accurate solver for Q2D charged systems is developed based on the sum-of-Gaussian approximation of the Coulomb kernel and the kernel splitting technique.
+The method can be regarded as a 2-level DMK method @greengard2023dual.
 // The Coulomb kernel is splitted into three parts:
 // - near field terms: solved by real space truncation
 // - mid-range terms: solved by the Fourier spectral method with little zero padding and no upsampling
@@ -555,10 +556,10 @@ Tensor networks can be used to extract the local information of the sub-graph @g
       columns: (auto, auto),
       table.header(hdl[Boundary configuration: $s_(a b c)$], hdl[Possible assignments: $s_(a b c d e)$]),
       sl[000], sl[00010, 00001],
-      sl[100], sl[10000],
+      // sl[100], sl[10000],
       sl[010], sl[01001],
-      sl[001], sl[00100],
-      sl[110], sl[11000],
+      // sl[001], sl[00100],
+      // sl[110], sl[11000],
       sl[101], sl[10100]
     )
   )
@@ -574,7 +575,7 @@ Its complexity on 3-regular graphs is about $O(1.1224^n)$, far from the SOTA ($O
 #timecounter(1)
 
   #leftright(
-    text(20pt)[Tensor network approach \ 1. Contract the local tensor network for the sub-graph and pick the non-zero elements. \ 2. For all possible boundaries, fix all the variables and continue the contraction$ gamma^n = 6 times gamma^(n-5) arrow gamma approx 1.4310 $],
+    text(20pt)[Tensor network approach \ 1. Contract the local tensor network for the sub-graph and pick the non-zero elements. \ 2. For all possible boundaries, fix all the variables and continue the contraction$ gamma^n = 3 times gamma^(n-5) arrow gamma approx 1.2457 $],
     text(20pt)[Branching algorithm \ 1. Search for structures in the sub-graph. \ 2. Find $d$ and $e$ are connected and $N[e] subset N[d]$, satisfying the domination rule, fix $d = 0$, i.e., not in the MIS $ gamma = 1.0 $]
   )
 
@@ -619,10 +620,10 @@ Its complexity on 3-regular graphs is about $O(1.1224^n)$, far from the SOTA ($O
       columns: (auto, auto),
       table.header(hdl[Boundary configuration: $s_(a b c)$], hdl[Possible assignments: $s_(a b c d e)$]),
       sl[000], sl[00010, 000#redtext(0)1],
-      sl[100], sl[100#redtext(0)0],
+      // sl[100], sl[100#redtext(0)0],
       sl[010], sl[010#redtext(0)1],
-      sl[001], sl[001#redtext(0)0],
-      sl[110], sl[110#redtext(0)0],
+      // sl[001], sl[001#redtext(0)0],
+      // sl[110], sl[110#redtext(0)0],
       sl[101], sl[101#redtext(0)0]
     )
   )
@@ -657,6 +658,8 @@ grid(
 === Finding the optimal branching rule
 
 #timecounter(1)
+
+Bruteforce search? $arrow$ Given $m$ assignments, possible rules: $O(2^(2^m))$.
 
 The process of finding the optimal branching rules is as the following:
 
@@ -795,7 +798,8 @@ grid(columns: 9,
     let indices = ($i$, $j$, $k$, $l$)
     show-graph-black(locs.map(v => (v.at(0) * (s + 0.8), v.at(1) * (s + 0.8))), e, radius:0.0)
     show-graph-black(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, radius:0.5)
-    show-graph-content(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, c, radius:0.5, fontsize: 16pt)
+    // show-graph-content(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, c, radius:0.5, fontsize: 16pt)
+    content((T.at(0) * s, T.at(1) * s), text(16pt, fill:white)[$T$])
     for (i, v) in mid.map(v => (v.at(0) * (s), v.at(1) * (s))).enumerate() {
       circle(v, radius:0.3, fill:white, stroke:none)
       content(v, text(15pt, black)[#indices.at(i)])
@@ -807,6 +811,7 @@ grid(columns: 9,
   align(center + horizon,
   canvas({
     import draw: *
+    content((0, 3.5), text(20pt, black)[$T$])
     content((0,0), text(20pt, black)[
       #table(
       columns: (auto, auto),
@@ -815,7 +820,7 @@ grid(columns: 9,
       table.header(hdl[$i j k l$], hdl[value]),
       sl[#redtext(11)01], sl[0.1],
       sl[#redtext(11)10], sl[0.2],
-      sl[#redtext(11)00], sl[0.3],
+      sl[#redtext(11)#bluetext(0)#bluetext(0)], sl[0.3],
       sl[10#bluetext(0)#bluetext(0)], sl[0.4],
       sl[01#bluetext(0)#bluetext(0)], sl[0.5]
       )
@@ -835,16 +840,20 @@ grid(columns: 9,
       let locs = (T, A, B, C, D)
       let mid = (A, B, C, D).map(v => (v.at(0) * 0.5, v.at(1) * 0.5))
       let e = ((0, 1), (0, 2), (0, 3), (0, 4))
+      let e2 = ((0, 3), (0, 4))
       let c = ((0, $T_(1 1 k l)$), (1, $A_(1 *)$), (2, $B_(1 *)$), (3, $C_(k *)$), (4, $D_(l *)$))
       let s = 2
-      let indices = ("1", "1", $k$, $l$)
-      show-graph-black(locs.map(v => (v.at(0) * (s + 0.8), v.at(1) * (s + 0.8))), e, radius:0.0)
-      show-graph-black(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, radius:0.5)
-      show-graph-content(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, c, radius:0.5, fontsize: 10pt)
+      let indices = (" ", " ", $k$, $l$)
+      show-graph-black(locs.map(v => (v.at(0) * (s + 0.8), v.at(1) * (s + 0.8))), e2, radius:0.0)
+      show-graph-black(locs.map(v => (v.at(0) * s, v.at(1) * s)), e2, radius:0.5)
+      // show-graph-content(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, c, radius:0.5, fontsize: 10pt)
+      // content((T.at(0) * s, T.at(1) * s), text(10pt, fill:white)[$T_1$])
       for (i, v) in mid.map(v => (v.at(0) * (s), v.at(1) * (s))).enumerate() {
         circle(v, radius:0.3, fill:white, stroke:none)
         content(v, text(10pt, black)[#indices.at(i)])
       }
+      line((B.at(0) * s, B.at(1) * s), (B.at(0) * s, B.at(1) * s + 1))
+      line((A.at(0) * s, A.at(1) * s), (A.at(0) * s + 1, A.at(1) * s))
     }),
     v(10pt),
     text(20pt)[$+$],
@@ -859,16 +868,20 @@ grid(columns: 9,
       let locs = (T, A, B, C, D)
       let mid = (A, B, C, D).map(v => (v.at(0) * 0.5, v.at(1) * 0.5))
       let e = ((0, 1), (0, 2), (0, 3), (0, 4))
+      let e2 = ((0, 1), (0, 2))
       let c = ((0, $T_(i j 0 0)$), (1, $A_(i *)$), (2, $B_(j *)$), (3, $C_(0 *)$), (4, $D_(0 *)$))
       let s = 2
-      let indices = ($i$, $j$, $0$, $0$)
-      show-graph-black(locs.map(v => (v.at(0) * (s + 0.8), v.at(1) * (s + 0.8))), e, radius:0.0)
-      show-graph-black(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, radius:0.5)
-      show-graph-content(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, c, radius:0.5, fontsize: 10pt)
+      let indices = ($i$, $j$, " ", " ")
+      show-graph-black(locs.map(v => (v.at(0) * (s + 0.8), v.at(1) * (s + 0.8))), e2, radius:0.0)
+      show-graph-black(locs.map(v => (v.at(0) * s, v.at(1) * s)), e2, radius:0.5)
+      // show-graph-content(locs.map(v => (v.at(0) * s, v.at(1) * s)), e, c, radius:0.5, fontsize: 10pt)
+      // content((T.at(0) * s, T.at(1) * s), text(10pt, fill:white)[$T_2$])
       for (i, v) in mid.map(v => (v.at(0) * (s), v.at(1) * (s))).enumerate() {
         circle(v, radius:0.3, fill:white, stroke:none)
         content(v, text(10pt, black)[#indices.at(i)])
       }
+      line((C.at(0) * s, C.at(1) * s), (C.at(0) * s - 1, C.at(1) * s))
+      line((D.at(0) * s, D.at(1) * s), (D.at(0) * s, D.at(1) * s - 1))
     })
   )
 )
