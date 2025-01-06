@@ -37,7 +37,7 @@
 #let globalvars = state("t", 0)
 #let timecounter(minutes) = [
   #globalvars.update(t => t + minutes)
-  #place(top + right,text(16pt, red)[#context globalvars.get()min])
+  // #place(top + right,text(16pt, red)[#context globalvars.get()min])
 ]
 #let clip(image, top: 0pt, bottom: 0pt, left: 0pt, right: 0pt) = {
   box(clip: true, image, inset: (top: -top, right: -right, left: -left, bottom: -bottom))
@@ -83,7 +83,7 @@
 
 = A Fast Spectral Sum-of-Gaussians Method for Coulomb Interaction
 
-#text(20pt)[Joint work with Qi Zhou, Jiuyang Liang, Zhenli Xu, and Shidong Jiang]
+#text(20pt)[Joint work with Shidong Jiang, Jiuyang Liang, Zhenli Xu, and Qi Zhou]
 
 #text(20pt)[arXiv:2412.04595]
 
@@ -133,11 +133,17 @@ The very first method is the Ewald2D @parry1975electrostatic method based on the
 
 To reduce the complexity, most methods rely on the following three strategies:
 
-- *Fourier spectral method* @lindbo2011spectral @lindbo2012fast @nestler2015fast @shamshirgar2017spectral @shamshirgar2021fast @maxian2021fast: based on Ewald splitting and fast Fourier transform (FFT), with $O(N log N)$ complexity.
+- *Fourier spectral method* (Lindbo & Tornberg, 2011; 2012; Nestler et al., 2015; Shamshirgar & Tornberg, 2017; Shamshirgar et al., 2021; Maxian et al., 2021): based on Ewald splitting and fast Fourier transform (FFT), with $O(N log N)$ complexity.
 
-- *Fast multipole methods* @greengard1987fast @yan2018flexibly @liang2020harmonic @liang2022hsma @jiang2023jcp: accelerated by hierarchical low-rank compression, adaptive and with $O(N)$ complexity.
+// @lindbo2011spectral @lindbo2012fast, @nestler2015fast, @shamshirgar2017spectral, @shamshirgar2021fast, @maxian2021fast
 
-- *Random batch Ewald* @gan2024fast @gan2024random @Jin2020SISC: based on Ewald splitting and random batch sampling, stochastic and with $O(N)$ complexity.
+- *Fast multipole methods* (Greengard & Rokhlin, 1987; Yan & Shelley, 2018; Liang et al., 2020; Liang et al., 2022; Pei et al., 2023): accelerated by hierarchical low-rank compression, adaptive and with $O(N)$ complexity.
+
+// @greengard1987fast, @yan2018flexibly, @liang2020harmonic, @liang2022hsma, @jiang2023jcp
+
+- *Random batch Ewald* (Jin et al., 2021; Liang et al., 2022; Gan et al., 2024a; Gan et al., 2024b): based on Ewald splitting and random batch sampling, stochastic and with $O(N)$ complexity, efficient parallelization.
+
+// @Jin2020SISC, @gan2024fast, @gan2024random, @liang2022superscalability
 
 #pagebreak()
 
@@ -150,11 +156,12 @@ For doubly periodic systems, one major challenge is the large prefactor in $O(N)
 
 - For the FMM based methods, more near field contributions is included @yan2018flexibly.
 
-The recently developed methods including 
+Some recently developed methods offer potential solutions to this challenge, including:
 - Anisotropic truncation kernel method @greengard2018anisotropic
 - Periodic FMM @jiang2023jcp
 - Dual-space multilevel kernel-splitting method @greengard2023dual
-offer potential solutions to this challenge, but these methods have not yet been extended to handle quasi-2D systems.
+
+However, these methods have not yet been extended to handle quasi-2D systems.
 
 == The algorithm
 
@@ -162,12 +169,12 @@ offer potential solutions to this challenge, but these methods have not yet been
 
 #timecounter(1)
 
-In our work, we use a sum-of-Gaussians (SOG) approximation @beylkin2010approximation of the Coulomb kernel, where
+In our work, we use the bilateral series approximation @beylkin2010approximation of the Coulomb kernel, where
 $
   1 / r approx (2 log b) / sqrt(2 pi sigma^2) sum_(l = - infinity)^(infinity) 1 / (b^l) e^(- r^2 / (sqrt(2) b^l sigma)^2), " with" cal(E)_r < 2 sqrt(2) e^(- pi^2 / (2 log b))
 $
 
-Based on that, the u-series decomposition @DEShaw2020JCP splits the potential into three parts:
+Based on the u-series decomposition @DEShaw2020JCP, we further split the potential into three parts:
 $
   1 / r approx underbrace(( 1 / r - sum_(l = 0)^M w_l e^(- r^2 / s_l^2)) bb(1)_(r < r_c), "near-field")+ underbrace(sum_(l = 0)^m w_l e^(- r^2 / s_l^2), "mid-range") + underbrace(sum_(l = m + 1)^M w_l e^(- r^2 / s_l^2), "long-range")
 $
@@ -891,68 +898,43 @@ Disadvantages:
 - solving the rule can be computationally expensive
 - cannot capture the rules need graph rewriting
 
-= Conclusion and Outlook
+= Summary and Outlook
 
-// == Probabilistic inference via tensor networks
+== Fast Summation Algorithms
+#timecounter(1)
 
-// #grid(columns: 3,
-//   text(20pt)[
-//     The modern tensor network techniques are applied to solve the probabilistic inference tasks#footnote(text(12pt)[#link("https://github.com/TensorBFS/TensorInference.jl")],):
-//     - Contraction order optimization @gray2021hyper
-//     - Automatic differentiation @liao2019differentiable
-//     - Tropical tensor network @liu2023computing
 
-//     An exponential speedup is achieved for the typical inference tasks against the widely used solvers on the UAI problem set#footnote(text(12pt)[https://auai.org/uai2014/competition.shtml],).
-//   ],
-//   h(20pt),
-//   figure(
-//     image("figs/ti_benchmark.png", height: 330pt),
-//     caption: [#text(15pt)[Speedup of the inference tasks against the previous solvers.]],
-//   )
-// )
+=== Publications
 
-// #pagebreak()
+- *X. Gao*, S. Jiang, J. Liang, Z. Xu, and Q. Zhou, A fast spectral sum-of-Gaussians method for electrostatic summation in quasi-2D systems, Arxiv:2412.04595 (2024)
+- Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Fast algorithm for quasi-2D Coulomb systems, Arxiv:2403.01521 (2024)
+- Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Random batch Ewald method for dielectrically confined Coulomb systems, Arxiv:2405.06333 (2024)
+- *X. Gao* and Z. Gan, Broken symmetries in quasi-2D charged systems via negative dielectric confinement, The Journal of Chemical Physics 161, (2024)
 
-// A custom GPU kernel#footnote(text(12pt)[Code: #link("https://github.com/TensorBFS/CuTropicalGEMM.jl"). Blog: #link("https://arrogantgao.github.io/blogs/CuTropicalGEMM/")],) for tropical matrix multiplication is implemented to accelerate the inference. It can achieve a 4000x speedup for tropical mat-mul compared to CPU.
+=== Software packages
 
-// #grid(columns: 3,
-//   figure(
-//     image("figs/cutropicalgemm.png", height: 280pt),
-//     caption: [#text(15pt)[Benchmark of the custom GPU kernel for tropical matrix multiplication.]],
-//   ),
-//   h(20pt),
-//   figure(
-//     image("figs/ti_gpu.png", height: 280pt),
-//     caption: [#text(15pt)[Speedup of the MMAP inference tasks by GPU againist the CPU version.]],
-//   )
-// )
-
-// #pagebreak()
-
-// == Conclusion
-
-// Some conclusions.
+// - *ExTinyMD.jl*: A simple framework for MD simulation.
+- *EwaldSummations.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/EwaldSummations.jl")],): Various Ewald summation methods with parallelization.
+- *ChebParticleMesh.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],): Toolkits for smooth particle mesh (type-1 and type-2 NUFFT).
+- *FastSpecSoG.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.jl")],): Implementation of the fast spectral SOG method.
 
 #pagebreak()
 
-== Software packages
-#timecounter(2)
+== Tensor Network Algorithms
+#timecounter(1)
 
-=== Fast Summation Algorithms
+=== Publications
 
-// - *ExTinyMD.jl*: A simple framework for MD simulation.
-- *EwaldSummations.jl*: Various Ewald summation methods with parallelization.
-- *ChebParticleMesh.jl*: Toolkits for smooth particle mesh (type-1 and type-2 NUFFT).
-- *FastSpecSoG.jl*: Implementation of the fast spectral SOG method.
+- *X. Gao*, Y.-J. Wang, P. Zhang, and J.-G. Liu, Automated discovery of branching rules with optimal complexity for the maximum independent set problem, Arxiv:2412.07685 (2024)
+- *X. Gao*, X. Li, and J. Liu, Programming guide for solving constraint satisfaction problems with tensor networks, Arxiv:2501.00227 (2024)
+- M. Roa-Villescas, *X. Gao*, S. Stuijk, H. Corporaal, and J.-G. Liu, Probabilistic inference in the era of tensor networks and differential programming, Physical Review Research 6, 33261 (2024)
 
-\
+=== Software packages
 
-=== Tensor Network Algorithms
-
-- *TreeWidthSolver.jl*: Solving the treewidth problem (supported by GSoC 2024).
-- *CuTropicalGEMM.jl*: Custom GPU kernel for tropical matrix multiplication (supported by OSPP 2023).
-- *OMEinsumContractionOrders.jl*: Optimizing the tensor network contraction order.
-- *OptimalBranching.jl*: Implementation of the optimal branching algorithm.
+- *TreeWidthSolver.jl*#footnote(text(12pt)[#link("https://github.com/ArrogantGao/TreeWidthSolver.jl")],): Solving the treewidth problem (supported by GSoC 2024).
+- *CuTropicalGEMM.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/CuTropicalGEMM.jl")],): Custom GPU kernel for tropical matrix multiplication (supported by OSPP 2023).
+// - *OMEinsumContractionOrders.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/OMEinsumContractionOrders.jl")],): Optimizing the tensor network contraction order.
+- *OptimalBranching.jl*#footnote(text(12pt)[#link("https://github.com/OptimalBranching/OptimalBranching.jl")],): Implementation of the optimal branching algorithm.
 
 #pagebreak()
 
@@ -961,7 +943,7 @@ Disadvantages:
 
 === Fast Summation Algorithms
 
-- efficient methods based on the DMK framework @greengard2023dual
+- Efficient methods based on the DMK framework @greengard2023dual
 
 \
 
@@ -971,8 +953,8 @@ Disadvantages:
 
 // I am also interested in developing efficient algorithms for evolving these states by integrating them with the Dirac–Frenkel/McLachlan variational principle @raab2000dirac, the automatic differentiation and proper pre-conditioning @ganahl2017continuous.
 
-- branching based sparse tensor network contraction
-- more flexible quantum many-body ansatz
+- Branching based sparse tensor network contraction
+- More flexible quantum many-body ansatz
 // - proper pre-conditioning @ganahl2017continuous
 
 
@@ -1003,7 +985,7 @@ grid(columns: 3,
   )
 )
 
-Also thank Jiuyang Liang (SJTU & CCM), Qi Zhou (SJTU), and Yijia Wang (ITP, CAS) for collaboration.
+Also thank Jiuyang Liang (SJTU & CCM), Qi Zhou (SJTU), Martin (TEU), and Yijia Wang (ITP, CAS) for collaboration.
 
 #focus-slide[
   Thank you for your attention!
@@ -1210,17 +1192,17 @@ A tropical TN can be used to solve the MIS problem, a simple example is shown be
   grid(columns: 5,
   align(center + horizon, align(center, canvas({
   import draw: *
-  for (loc, name, color) in (((0, 0), "a", black), ((0, 3), "b", black), ((3, 0), "d", black), ((3, 3), "c", black), ((5, 1.5), "e", black)) {
+  for (loc, name, color) in (((0, 0), "a", black), ((0, 3), "b", black), ((3, 3), "d", black), ((3, 0), "c", black), ((5, 4.5), "e", black)) {
     circle(loc, radius:0.5, name: name, stroke: color)
     content(loc, [$#name$])
   }
   for (a, b) in (
     ("a", "b"),
-    ("a", "d"),
+    ("b", "d"),
     ("a", "c"),
     ("c", "d"),
     ("b", "c"),
-    ("c", "e"),
+    ("d", "e"),
     ) {
     line(a, b)
   }

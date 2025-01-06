@@ -59,12 +59,13 @@ I have also concentrated on tensor network-based algorithms for combinatorial op
 @fssog
 
 @tensorbranching
+
+@complexitypaper
 #subsectionsep
 #subsection("In Draft (preprint available upon request)")
 
 @quasiewald
 
-@complexitypaper
 #sectionsep
 #section("Software Packages")
 #oneline-title-item(
