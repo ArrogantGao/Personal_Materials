@@ -554,7 +554,7 @@ Tensor networks can be used to extract the local information of the sub-graph @g
     h(30pt),
     table(
       columns: (auto, auto),
-      table.header(hdl[Boundary configuration: $s_(a b c)$], hdl[Possible assignments: $s_(a b c d e)$]),
+      table.header(hdl[Boundary configuration: $s_(a b c)$], hdl[Possible assignments: $S_(a b c d e)$]),
       sl[000], sl[00010, 00001],
       // sl[100], sl[10000],
       sl[010], sl[01001],
@@ -618,7 +618,7 @@ Its complexity on 3-regular graphs is about $O(1.1224^n)$, far from the SOTA ($O
     h(30pt),
     table(
       columns: (auto, auto),
-      table.header(hdl[Boundary configuration: $s_(a b c)$], hdl[Possible assignments: $s_(a b c d e)$]),
+      table.header(hdl[Boundary configuration: $s_(a b c)$], hdl[Possible assignments: $S_(a b c d e)$]),
       sl[000], sl[00010, 000#redtext(0)1],
       // sl[100], sl[100#redtext(0)0],
       sl[010], sl[010#redtext(0)1],
