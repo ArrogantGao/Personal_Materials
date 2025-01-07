@@ -95,7 +95,7 @@
 
 #timecounter(1)
 
-Quasi-2D systems @mazars2011long are at the macroscopic scale in $x y$, but microscopic in $z$, so that are always modeled as doubly periodic in simulations.
+Quasi-2D systems @mazars2011long are at the macroscopic scale in $x y$, but microscopic in $z$, so that are always modeled as doubly periodic in numerical simulations.
 // Q2D systems are widely exist in nature and engineering, for example, cell membranes and electrolyte near surfaces.
 
 #figure(
@@ -375,7 +375,7 @@ The branching algorithms @Fomin2013 is the most widely used method to solve this
 
 #timecounter(2)
 
-Branching algorithm rely on predesigned rules to search the solution space in a tree-like structure. 
+The branching algorithm explores the solution space using a tree-like structure, relying on predefined rules.
 
 Complexity of a branching algorithm is always described as $O(gamma^n)$ where $gamma$ is the branching factor and $n$ is the size of the problem.
 
