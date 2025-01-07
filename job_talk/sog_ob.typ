@@ -37,7 +37,7 @@
 #let globalvars = state("t", 0)
 #let timecounter(minutes) = [
   #globalvars.update(t => t + minutes)
-  // #place(top + right,text(16pt, red)[#context globalvars.get()min])
+  #place(top + right,text(16pt, red)[#context globalvars.get()min])
 ]
 #let clip(image, top: 0pt, bottom: 0pt, left: 0pt, right: 0pt) = {
   box(clip: true, image, inset: (top: -top, right: -right, left: -left, bottom: -bottom))
@@ -322,7 +322,7 @@ The method can be regarded as a 2-level DMK method @greengard2023dual.
 // - long-range terms: solved by the Fourier-Chebyshev method with $O(1)$ number of Chebyshev points
 
 It has the following advantages:
-- spectrally accurate with rigorous error analysis
+- spectrally accurate with rigorous error analysis @liang2025errorestimateuseriesmethod
 // - not sensitive to the aspect ratio of the system
 - need little/no zero-padding for systems that are confined in a rectangular box of high aspect ratio
 - does not require any upsampling in the gridding step
@@ -556,11 +556,11 @@ Tensor networks can be used to extract the local information of the sub-graph @g
       columns: (auto, auto),
       table.header(hdl[Boundary configuration: $s_(a b c)$], hdl[Possible assignments: $S_(a b c d e)$]),
       sl[000], sl[00010, 00001],
-      // sl[100], sl[10000],
       sl[010], sl[01001],
+      sl[101], sl[10100],
+      // sl[100], sl[10000],
       // sl[001], sl[00100],
       // sl[110], sl[11000],
-      sl[101], sl[10100]
     )
   )
 )
@@ -572,7 +572,7 @@ Its complexity on 3-regular graphs is about $O(1.1224^n)$, far from the SOTA ($O
 
 === What is the difference?
 
-#timecounter(1)
+#timecounter(2)
 
   #leftright(
     text(20pt)[Tensor network approach \ 1. Contract the local tensor network for the sub-graph and pick the non-zero elements. \ 2. For all possible boundaries, fix all the variables and continue the contraction$ gamma^n = 3 times gamma^(n-5) arrow gamma approx 1.2457 $],
@@ -657,50 +657,64 @@ grid(
 
 === Finding the optimal branching rule
 
-#timecounter(1)
+#timecounter(2)
 
-Bruteforce search? $arrow$ Given $m$ assignments, possible rules: $O(2^(2^m))$.
+Bruteforce search? $arrow$ Given $l$ assignments, possible rules: $O(2^(2^l))$.
 
 The process of finding the optimal branching rules is as the following:
 
-#align(center, canvas({
-  import draw: *
-  content((0, 0), box(text(15pt)[Possible assignments ${bold(s)_1, bold(s)_2, dots, bold(s)_l}$], stroke: black, inset: 10pt), name: "oracle")
-  content((0, -2.5), box(text(15pt)[Candidate clauses $cal(C) = {c_1, c_2, dots, c_m}$], stroke: black, inset: 10pt), name: "clauses")
-  content((0, -5), box(text(15pt)[Optimal branching rule $cal(D) = c_(k_1) or c_(k_2) or dots$], stroke: black, inset: 10pt), name: "branching")
-  line("oracle", "clauses", mark: (end: "straight"))
-  line("clauses", "branching", mark: (end: "straight"))
-}))
+#grid(columns: 3,
+  align(center, canvas({
+    import draw: *
+    content((0, 0), box(text(15pt)[Possible assignments $ {bold(s)_1, bold(s)_2, dots, bold(s)_l} $], stroke: black, inset: 10pt), name: "oracle")
+    content((0, -4.5), box(text(15pt)[Candidate clauses $ cal(C) = {c_1, c_2, dots, c_m} $], stroke: black, inset: 10pt), name: "clauses")
+    content((0, -9), box(text(15pt)[Optimal branching rule $ cal(D) = c_(k_1) or c_(k_2) or dots $], stroke: black, inset: 10pt), name: "branching")
+    line("oracle", "clauses", mark: (end: "straight"))
+    line("clauses", "branching", mark: (end: "straight"))
+  })),
+  h(40pt),
+  text(20pt)[
+    The first step is very direct forward, we generate all possible combination of the assignments (the candidate clauses).
 
-The candidate clauses are the combinations of the possible assignments, for example, a combination of the 3rd and 4th assignments is given by:
+    The second step is formulated as a set covering problem, which can be solved by MIP solvers @Achterberg2009.
+    $
+      min_(gamma, bold(x)) gamma " s.t. " & sum_(i=1)^m gamma^(-Delta rho(c_i)) x_i = 1,\
+      & union.big_(i = 1, dots, m\ x_i = 1) J_i = {1, 2, dots, l},  #h(10pt) arrow "valid branching rule"\
+      & x_i in {0, 1} #h(10pt) arrow "a clause is selected or not"
+    $
+    where $Delta rho(c_i)$ is the size reduced by the clause $c_i$ of the problem.
+  ]
+)
 
-$
-  "combine"(not a and b and not c and d and not e, a and b and c and not d and not e) = b and not e
-$
+// The candidate clauses are the combinations of the possible assignments, for example, a combination of the 3rd and 4th assignments is given by:
 
-we say $b and not e$ covers ${3, 4}$.
-The clauses are generated iteratively.
+// $
+//   "combine"(not a and b and not c and d and not e, a and b and c and not d and not e) = b and not e
+// $
 
-#pagebreak()
+// we say $b and not e$ covers ${3, 4}$.
+// The clauses are generated iteratively.
 
-=== Set covering via mixed integer programming
+// #pagebreak()
 
-#timecounter(1)
+// === Set covering
 
-Then we solve a set covering problem by formulating it as a mixed integer programming problem, which can be solved by MIP solvers @Achterberg2009.
+// #timecounter(1)
 
-$
-min_(gamma, bold(x)) gamma " s.t. " & sum_(i=1)^m gamma^(-Delta rho(c_i)) x_i = 1,\
-& union.big_(i = 1, dots, m\ x_i = 1) J_i = {1, 2, dots, n},  #h(50pt) arrow "valid branching rule"\
-& x_i in {0, 1} #h(161pt) arrow "a clause is selected or not"
-$
-where $rho(c_i)$ is the size reduced by the clause $c_i$ of the problem.
+// Then we formulate the problem as a set covering problem, which can be solved by MIP solvers @Achterberg2009.
 
-The chosen clauses form the optimal branching rule:
-$
-  cal(D) = c_(k_1) or c_(k_2) or dots or c_(k_m)
-$
-with the minimum $gamma$ among all the possible branching rules.
+// $
+// min_(gamma, bold(x)) gamma " s.t. " & sum_(i=1)^m gamma^(-Delta rho(c_i)) x_i = 1,\
+// & union.big_(i = 1, dots, m\ x_i = 1) J_i = {1, 2, dots, l},  #h(50pt) arrow "valid branching rule"\
+// & x_i in {0, 1} #h(161pt) arrow "a clause is selected or not"
+// $
+// where $Delta rho(c_i)$ is the size reduced by the clause $c_i$ of the problem.
+
+// The chosen clauses form the optimal branching rule:
+// $
+//   cal(D) = c_(k_1) or c_(k_2) or dots or c_(k_m)
+// $
+// with the minimum $gamma$ among all the possible branching rules.
 
 == Numerical results
 
@@ -775,8 +789,7 @@ A bottle neck case has been reported in Xiao's work @Xiao2013, with a branching 
 == Potential applications
 
 === Sparse Tensor Networks Contraction via Optimal Branching
-
-#timecounter(2)
+#timecounter(1)
 
 The optimal branching algorithm can be applied to contract the sparse tensor networks.
 // Assume that $T$ is a sparse tensor, the non-zeros values are listed as below:
@@ -952,7 +965,7 @@ Disadvantages:
 #pagebreak()
 
 == Future Research Plans
-#timecounter(2)
+#timecounter(1)
 
 === Fast Summation Algorithms
 
