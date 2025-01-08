@@ -316,10 +316,12 @@ The method #footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.j
 
 A fast and accurate solver for Q2D charged systems is developed based on the sum-of-Gaussian approximation of the Coulomb kernel and the kernel splitting technique.
 The method can be regarded as a 2-level DMK method @greengard2023dual.
+
 // The Coulomb kernel is splitted into three parts:
 // - near field terms: solved by real space truncation
 // - mid-range terms: solved by the Fourier spectral method with little zero padding and no upsampling
 // - long-range terms: solved by the Fourier-Chebyshev method with $O(1)$ number of Chebyshev points
+*The solver addresses challenges arising from singularities and strong confinement without any upsampling.*
 
 It has the following advantages:
 - spectrally accurate with rigorous error analysis @liang2025errorestimateuseriesmethod
@@ -382,7 +384,7 @@ It caught much attention since the Rydberg atom systems realize spin models that
 
 #timecounter(2)
 
-The branching algorithm @Fomin2013 explores the solution space using a tree-like structure, relying on predesigned rules.
+The branching algorithm @Fomin2013 explores the solution space using a tree-like structure, relying on *predesigned rules*.
 
 Complexity of a branching algorithm is always described as *$O(gamma^n)$* where $gamma$ is the branching factor and $n$ is the size of the problem.
 
@@ -657,7 +659,7 @@ grid(
 )
 )
 
-#align(center, box([Question: How to solve the rules from the assignments?], stroke: black, inset: 10pt))
+#align(center, box([Key point: Find the *correct pattern*!], stroke: black, inset: 10pt))
 
 #pagebreak()
 
@@ -801,9 +803,9 @@ A bottle neck case has been reported in Xiao's work @Xiao2013, with a branching 
 
 #pagebreak()
 
-== Potential applications
+== Potential application
 
-=== Sparse Tensor Networks Contraction via Optimal Branching
+=== Sparse Tensor Networks Contraction
 #timecounter(2)
 
 The optimal branching algorithm can be applied to contract the sparse tensor networks.
