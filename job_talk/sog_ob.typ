@@ -56,7 +56,7 @@
   align: horizon,
 
   config-info(
-    title: [Fast Summation Algorithms and Tensor Networks Methods for  Scientific Problems],
+    title: [Fast Summation Algorithms and Tensor Network Methods for  Scientific Applications],
     // subtitle: [],
     author: text(23pt)[Xuanzhao Gao],
     institution: text(20pt)[Hong Kong University of Science and Technology],
@@ -85,7 +85,7 @@
 
 #text(20pt)[Joint work with Shidong Jiang, Jiuyang Liang, Zhenli Xu, and Qi Zhou]
 
-#text(20pt)[arXiv:2412.04595]
+#text(20pt)[arXiv:2412.04595, under review at #emph[Numerische Mathematik]]
 
 == Background
 
@@ -137,7 +137,7 @@ To reduce the complexity, most methods rely on the following three strategies:
 
 // @lindbo2011spectral @lindbo2012fast, @nestler2015fast, @shamshirgar2017spectral, @shamshirgar2021fast, @maxian2021fast
 
-- *Fast multipole methods* (Greengard & Rokhlin, 1987; Berman & Greengard, 1994; Yan & Shelley, 2018; Liang et al., 2020): accelerated by hierarchical low-rank compression, adaptive and with $O(N)$ complexity.
+- *Fast multipole methods* (Greengard, 1987; Greengard & Rokhlin, 1987; Berman & Greengard, 1994; Yan & Shelley, 2018; Liang et al., 2020): accelerated by hierarchical low-rank compression, adaptive and with $O(N)$ complexity.
 
 // @greengard1987fast, @yan2018flexibly, @liang2020harmonic, @liang2022hsma, @jiang2023jcp, @berman1994renormalization
 
@@ -158,7 +158,8 @@ For doubly periodic systems, one major challenge is the large prefactor in $O(N)
 
 Some recently developed methods offer potential solutions to this challenge, including:
 - Anisotropic truncation kernel method @greengard2018anisotropic
-- Periodic FMM @jiang2023jcp
+- Periodic FMM (Pei, Greengard & Jiang, 2023)
+// @jiang2023jcp
 - Dual-space multilevel kernel-splitting method @greengard2023dual
 
 However, these methods have not yet been extended to handle quasi-2D systems.
@@ -213,7 +214,7 @@ Selecting $m$ so that $s_m < eta L_z < s_(m+1)$, where $eta$ is $O(1)$ constant.
 
 #timecounter(1)
 
-The mid-range potential is computed by a standard Fourier spectral solver #footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],) (type-1 and type-2 NUFFT in 3D @barnett2019parallel) with *little zero padding* ($lambda_z < 2$ for double precision).
+The mid-range potential is computed by a standard Fourier spectral solver #footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],) (type-1 and type-2 NUFFT like steps in 3D @barnett2019parallel) with *little zero padding* ($lambda_z < 2$ for double precision).
 $
   Phi_("mid")^l (arrow(r)) = sum_(arrow(n)) sum_(j = 1)^N q_j w_l e^(- (arrow(r) - arrow(r)_j + arrow(n) circle arrow(L))^2 / s_l^2), quad s_l < eta L_z
 $
@@ -256,17 +257,17 @@ $
 
 The extremely smooth long-range Gaussians are interpolated on the Chebyshev proxy points in $z$, similar to that of the periodic FMM @jiang2023jcp, and only *$O(1)$ number of Chebyshev points are required*.
 
-Then 2D NUFFT can be used to evaluate the potential on a tensor-product grid.
+Then 2D NUFFT like steps can be used to evaluate the potential on a tensor-product grid, where upsampling is also not needed.
 
 #align(center, canvas({
   import draw: *
-  let box_loc = 6
+  let box_loc = 7
   let box_1 = (-box_loc, 0)
   let box_2 = (0, 0)
   let box_3 = (box_loc, 0)
 
   content(box_1, box(text(15pt)[Chebyshev interpolation], stroke: black, inset: 10pt), name: "box1")
-  content(box_2, box(text(15pt)[2D NUFFT], stroke: black, inset: 10pt), name: "box2")
+  content(box_2, box(text(15pt)[2D NUFFT like steps], stroke: black, inset: 10pt), name: "box2")
   content(box_3, box(text(15pt)[Evaluating polynomial], stroke: black, inset: 10pt), name: "box3")
 
   line("box1", "box2", mark: (end: "straight"))
@@ -276,6 +277,8 @@ Then 2D NUFFT can be used to evaluate the potential on a tensor-product grid.
 
 In cubic systems, $L_x ~ L_y ~ L_z$, $O(1)$ Fourier modes in $x y$ and $O(1)$ Chebyshev points in $z$, no need for NUFFT.
 
+In strongly confined systems, $s_0 < eta L_z$, only long range potential is needed.
+
 #pagebreak()
 
 === Complexity
@@ -284,14 +287,14 @@ In cubic systems, $L_x ~ L_y ~ L_z$, $O(1)$ Fourier modes in $x y$ and $O(1)$ Ch
 
 Using DFT for long-range potential, the complexity is
 $
-  O"("underbrace(4 pi r_c^3 rho_r N, "near-field") + underbrace(cal(P)_x cal(P)_y cal(P)_z N + (lambda_z (1 + delta / L_z)) / (r_c^3 rho_r) N log N, "mid-range by 3D-NUFFT") + underbrace((P L_x L_y) / (eta^2 L_z^2) N, "long-range by DFT") ")"
+  O"("underbrace(4 pi r_c^3 rho_r N, "near-field") + underbrace(cal(P)_x cal(P)_y cal(P)_z N + (lambda_z (1 + delta / L_z)) / (r_c^3 rho_r) N log N, "mid-range") + underbrace((P L_x L_y) / (eta^2 L_z^2) N, "long-range") ")"
 $
 where $cal(P)_x, cal(P)_y, cal(P)_z$ are the window supports, $lambda_z$ is the padding ratio, $delta$ is the extended length of the box in the free direction to accommodate the support of the window function, $P$ is the number of Chebyshev points.
 By taking $r_c ~ O(1)$ and assume $L_z ~ O(sqrt(L_x L_y))$, the complexity is $O(N log N)$.
 
 Using 2D-NUFFT for long-range potential, the complexity is
 $
-  O"("underbrace(4 pi r_c^3 rho_r N, "near-field") + underbrace(cal(P)_x cal(P)_y cal(P)_z N + (lambda_z (1 + delta / L_z)) / (r_c^3 rho_r) N log N, "mid-range by 3D-NUFFT") + underbrace(cal(P)_x cal(P)_y P N +  (P L_x L_y) / (s_(m + 1)^2) N log N, "long-range by 2D-NUFFT") ")"
+  O"("underbrace(4 pi r_c^3 rho_r N, "near-field") + underbrace(cal(P)_x cal(P)_y cal(P)_z N + (lambda_z (1 + delta / L_z)) / (r_c^3 rho_r) N log N, "mid-range") + underbrace(cal(P)_x cal(P)_y P N +  (P L_x L_y) / (s_(m + 1)^2) N log N, "long-range") ")"
 $
 which is needed when $L_z << L_x, L_y$, the total complexity is also $O(N log N)$.
 
@@ -321,12 +324,12 @@ The method can be regarded as a 2-level DMK method @greengard2023dual.
 // - near field terms: solved by real space truncation
 // - mid-range terms: solved by the Fourier spectral method with little zero padding and no upsampling
 // - long-range terms: solved by the Fourier-Chebyshev method with $O(1)$ number of Chebyshev points
-*The solver addresses challenges arising from singularities and strong confinement without any upsampling.*
+*The solver addresses challenges arising from singularities and strong confinement,* and can be regarded as probably optimal for simulating uniform distribution with low accuracy.
 
 It has the following advantages:
 - spectrally accurate with rigorous error analysis @liang2025errorestimateuseriesmethod
 - need little/no zero-padding for systems that are confined in a rectangular box of high aspect ratio
-- no need for upsampling in the gridding step
+- no need for upsampling in the gridding and gathering steps
 - all calculations are carried out in the fundamental cell itself
 - easy to be implemented and parallelized for large-scale MD simulations
 
@@ -336,11 +339,11 @@ Currently, the major shortcoming of this method is its non-adaptive nature, and 
 
 #text(20pt)[Joint work with Yi-Jia Wang, Pan Zhang, and Jin-Guo Liu]
 
-#text(20pt)[arXiv:2412.07685]
+#text(20pt)[arXiv:2412.07685, under review at #emph[SIAM Journal on Optimization]]
 
 == Background
 
-=== The maximum independent set problem
+=== The maximum independent set (MIS) problem
 #timecounter(1)
 
 #align(center, box([One of the first batch of 21 NP-hard problems proved by @Karp1972.], stroke: black, inset: 10pt))
@@ -738,7 +741,7 @@ A bottle neck case has been reported in Xiao's work @Xiao2013, with a branching 
   align(horizon, text(20pt, black)[
     - 71 possible assignments, 15782 candidate clauses. 
     // - The optimal branching rule can be solved in few seconds.
-    - 4 branches, size reduced by branches: $[10, 16, 26, 26]$, with 
+    - 4 branches, size of the problem reduced by branches: $[10, 16, 26, 26]$, with 
     *$ gamma = 1.0817 < 1.0836 $*
     which indicates our method can find better branching rules than the predesigned rules.
   ]),
@@ -950,16 +953,9 @@ Disadvantages:
 === Publications
 
 - *X. Gao*, S. Jiang, J. Liang, Z. Xu, and Q. Zhou, A fast spectral sum-of-Gaussians method for electrostatic summation in quasi-2D systems, Arxiv:2412.04595 (2024)
-- Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Fast algorithm for quasi-2D Coulomb systems, Arxiv:2403.01521 (2024). Accepted by Journal of Computational Physics.
+- Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Fast algorithm for quasi-2D Coulomb systems, Arxiv:2403.01521 (2024). Accepted by #emph[Journal of Computational Physics].
 - Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Random batch Ewald method for dielectrically confined Coulomb systems, Arxiv:2405.06333 (2024)
-- *X. Gao* and Z. Gan, Broken symmetries in quasi-2D charged systems via negative dielectric confinement, The Journal of Chemical Physics 161, (2024)
-
-=== Software packages
-
-// - *ExTinyMD.jl*: A simple framework for MD simulation.
-- *ChebParticleMesh.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],): Toolkits for smooth particle mesh (type-1 and type-2 NUFFT).
-- *FastSpecSoG.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.jl")],): Implementation of the fast spectral SOG method.
-- *EwaldSummations.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/EwaldSummations.jl")],): Various Ewald summation methods with parallelization.
+- *X. Gao* and Z. Gan, Broken symmetries in quasi-2D charged systems via negative dielectric confinement, #emph[The Journal of Chemical Physics] 161, (2024)
 
 #pagebreak()
 
@@ -970,14 +966,24 @@ Disadvantages:
 
 - *X. Gao*, Y.-J. Wang, P. Zhang, and J.-G. Liu, Automated discovery of branching rules with optimal complexity for the maximum independent set problem, Arxiv:2412.07685 (2024)
 - *X. Gao*, X. Li, and J. Liu, Programming guide for solving constraint satisfaction problems with tensor networks, Arxiv:2501.00227 (2024)
-- M. Roa-Villescas, *X. Gao*, S. Stuijk, H. Corporaal, and J.-G. Liu, Probabilistic inference in the era of tensor networks and differential programming, Physical Review Research 6, 33261 (2024)
+- M. Roa-Villescas, *X. Gao*, S. Stuijk, H. Corporaal, and J.-G. Liu, Probabilistic inference in the era of tensor networks and differential programming, #emph[Physical Review Research] 6, 33261 (2024)
 
-=== Software packages
+#pagebreak()
 
-- *CuTropicalGEMM.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/CuTropicalGEMM.jl")],): Custom GPU kernel for tropical matrix multiplication (supported by OSPP 2023).
-- *TreeWidthSolver.jl*#footnote(text(12pt)[#link("https://github.com/ArrogantGao/TreeWidthSolver.jl")],): Solving the treewidth problem (supported by GSoC 2024).
-// - *OMEinsumContractionOrders.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/OMEinsumContractionOrders.jl")],): Optimizing the tensor network contraction order.
+== Software packages
+
+=== My packages
+
+- *ChebParticleMesh.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],): Toolkits for smooth particle mesh (type-1 and type-2 NUFFT).
+- *CuTropicalGEMM.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/CuTropicalGEMM.jl")],): Custom GPU kernel for tropical matrix multiplication.
+- *TreeWidthSolver.jl*#footnote(text(12pt)[#link("https://github.com/ArrogantGao/TreeWidthSolver.jl")],): Solving the treewidth problem (supported by GSoC 2024, mentored by Jinguo Liu, Jutho Heageman and Lukas Devos).
+- *FastSpecSoG.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.jl")],): Implementation of the fast spectral SOG method.
+- *EwaldSummations.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/EwaldSummations.jl")],): Various Ewald summation methods with parallelization.
 - *OptimalBranching.jl*#footnote(text(12pt)[#link("https://github.com/OptimalBranching/OptimalBranching.jl")],): Implementation of the optimal branching algorithm.
+
+=== Contributions to popular packages
+
+- *OMEinsum.jl*#footnote(text(12pt)[#link("https://github.com/under-Peter/OMEinsum.jl")],) (185 stars) and its backend *OMEinsumContractionOrders.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/OMEinsumContractionOrders.jl")],): Optimizing the tensor network contraction order.
 
 #pagebreak()
 
@@ -986,10 +992,12 @@ Disadvantages:
 
 === Fast Summation Algorithms
 
-- Efficient methods based on the DMK framework @greengard2023dual
-- GPU acceleration for the fast algorithms
+// - the DMK framework to extend your current work to fully adaptive case, to other kernels, to other periodic systems 
+- Improving the performanace of our method based on FINUFFT#footnote(text(12pt)[#link("https://github.com/flatironinstitute/finufft")],), SCTL#footnote(text(12pt)[#link("https://github.com/dmalhotra/SCTL")],), and DUCC#footnote(text(12pt)[#link("https://gitlab.mpcdf.mpg.de/mtr/ducc")],).
+- Extending our work to fully adaptive case and other kernels based on the DMK framework, and write truly scalable code for simulating large systems.
+- GPU acceleration for the fast algorithms.
 
-\
+
 
 === Tensor Network Algorithms
 
@@ -997,8 +1005,8 @@ Disadvantages:
 
 // I am also interested in developing efficient algorithms for evolving these states by integrating them with the Dirac–Frenkel/McLachlan variational principle @raab2000dirac, the automatic differentiation and proper pre-conditioning @ganahl2017continuous.
 
-- Branching based sparse tensor network contraction
-- More flexible quantum many-body ansatz
+- Branching based sparse tensor network contraction.
+- More flexible quantum many-body ansatz.
 // - proper pre-conditioning @ganahl2017continuous
 
 
@@ -1029,7 +1037,7 @@ grid(columns: 3,
   )
 )
 
-Also thank Jiuyang Liang (SJTU & CCM), Qi Zhou (SJTU), Martin (TU/e), and Yijia Wang (ITP, CAS) for collaboration.
+Also thank Jiuyang Liang (SJTU & CCM), Qi Zhou (SJTU), Martin Roa-Villescas (TU/e), and Yi-Jia Wang (ITP, CAS) for collaboration.
 
 #focus-slide[
   Thank you for your attention!
