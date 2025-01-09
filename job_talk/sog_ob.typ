@@ -103,7 +103,7 @@ Quasi-2D systems @mazars2011long are at the macroscopic scale in $x y$, but micr
   caption: [Illustration of a quasi-2D charged system.],
 )
 
-Coulomb interaction plays a key role in nature, leading to effect such as ion transportation and self-assembly @luijten2014.
+Coulomb interaction plays a key role in nature, leading to effect such as ion transportation and self-assembly @luijten2014. 
 
 However, the Coulomb interaction decays as $r^(-1)$ in 3D, so that it is long ranged and singular at $r=0$, which make such simulation computationally expensive.
 
@@ -158,7 +158,7 @@ For doubly periodic systems, one major challenge is the large prefactor in $O(N)
 
 Some recently developed methods offer potential solutions to this challenge, including:
 - Anisotropic truncation kernel method @greengard2018anisotropic
-- Periodic FMM (Pei, Greengard & Jiang, 2023)
+- Periodic FMM (Pei, Askham, Greengard & Jiang, 2023)
 // @jiang2023jcp
 - Dual-space multilevel kernel-splitting method @greengard2023dual
 
@@ -213,11 +213,13 @@ Selecting $m$ so that $s_m < eta L_z < s_(m+1)$, where $eta$ is $O(1)$ constant.
 === Mid-range potential
 
 #timecounter(1)
-
-The mid-range potential is computed by a standard Fourier spectral solver #footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],) (type-1 and type-2 NUFFT like steps in 3D @barnett2019parallel) with *little zero padding* ($lambda_z < 2$ for double precision).
 $
   Phi_("mid")^l (arrow(r)) = sum_(arrow(n)) sum_(j = 1)^N q_j w_l e^(- (arrow(r) - arrow(r)_j + arrow(n) circle arrow(L))^2 / s_l^2), quad s_l < eta L_z
 $
+
+
+The mid-range potential is computed by a standard Fourier spectral solver #footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],) with *little zero padding* ($lambda_z < 2$ for double precision).
+Similar to type-1 and type-2 NUFFT in 3D @barnett2019parallel.
 
 #align(center, canvas({
   import draw: *
@@ -242,6 +244,11 @@ $
 
 
 - *No need of the kernel truncation* in the free direction due to the smoothness and separability of the Gaussian.
+
+// #pagebreak()
+
+// === Difference from standard NUFFT
+
 - *No upsampling* is needed since the Fourier transform of the Gaussian decays quickly and it compensates the loss of accuracy in calculating the Fourier transform of the data.
 
 #pagebreak()
@@ -250,12 +257,13 @@ $
 
 #timecounter(1)
 
-The long-range potential is computed by a Fourier-Chebyshev solver.
 $
   Phi_("long")^l (arrow(r)) = sum_(arrow(n)) sum_(j = 1)^N q_j w_l e^(- (arrow(r) - arrow(r)_j + arrow(n) circle arrow(L))^2 / s_l^2), quad s_l > eta L_z
 $
 
-The extremely smooth long-range Gaussians are interpolated on the Chebyshev proxy points in $z$, similar to that of the periodic FMM @jiang2023jcp, and only *$O(1)$ number of Chebyshev points are required*.
+The long-range potential is computed by a Fourier-Chebyshev solver.
+
+The extremely smooth long-range Gaussians are interpolated on the Chebyshev proxy points in $z$, similar to that of the periodic FMM, and only *$O(1)$ number of Chebyshev points are required*.
 
 Then 2D NUFFT like steps can be used to evaluate the potential on a tensor-product grid, where upsampling is also not needed.
 
@@ -277,7 +285,7 @@ Then 2D NUFFT like steps can be used to evaluate the potential on a tensor-produ
 
 In cubic systems, $L_x ~ L_y ~ L_z$, $O(1)$ Fourier modes in $x y$ and $O(1)$ Chebyshev points in $z$, no need for NUFFT.
 
-In strongly confined systems, $s_0 < eta L_z$, only long range potential is needed.
+In strongly confined systems, $s_0 > eta L_z$, only long range potential is needed.
 
 #pagebreak()
 
@@ -294,7 +302,7 @@ By taking $r_c ~ O(1)$ and assume $L_z ~ O(sqrt(L_x L_y))$, the complexity is $O
 
 Using 2D-NUFFT for long-range potential, the complexity is
 $
-  O"("underbrace(4 pi r_c^3 rho_r N, "near-field") + underbrace(cal(P)_x cal(P)_y cal(P)_z N + (lambda_z (1 + delta / L_z)) / (r_c^3 rho_r) N log N, "mid-range") + underbrace(cal(P)_x cal(P)_y P N +  (P L_x L_y) / (s_(m + 1)^2) N log N, "long-range") ")"
+  O"("underbrace(4 pi r_c^3 rho_r N, "near-field") + underbrace(cal(P)_x cal(P)_y cal(P)_z N + (lambda_z (1 + delta / L_z)) / (r_c^3 rho_r) N log N, "mid-range") + underbrace(cal(P)_x cal(P)_y P N +  (P) / (rho_r L_z^3 eta^2) N log N, "long-range") ")"
 $
 which is needed when $L_z << L_x, L_y$, the total complexity is also $O(N log N)$.
 
@@ -993,8 +1001,9 @@ Disadvantages:
 === Fast Summation Algorithms
 
 // - the DMK framework to extend your current work to fully adaptive case, to other kernels, to other periodic systems 
-- Improving the performanace of our method based on FINUFFT#footnote(text(12pt)[#link("https://github.com/flatironinstitute/finufft")],), SCTL#footnote(text(12pt)[#link("https://github.com/dmalhotra/SCTL")],), and DUCC#footnote(text(12pt)[#link("https://gitlab.mpcdf.mpg.de/mtr/ducc")],).
-- Extending our work to fully adaptive case and other kernels based on the DMK framework, and write truly scalable code for simulating large systems.
+- Improving the performanace of our method based on packages such as FINUFFT#footnote(text(12pt)[#link("https://github.com/flatironinstitute/finufft")],) and SCTL#footnote(text(12pt)[#link("https://github.com/dmalhotra/SCTL")],).
+// and DUCC#footnote(text(12pt)[#link("https://gitlab.mpcdf.mpg.de/mtr/ducc")],).
+- Extending our work to fully adaptive case, other kernels and other periodic systems based on the DMK framework, and write truly scalable code for simulating large systems.
 - GPU acceleration for the fast algorithms.
 
 
