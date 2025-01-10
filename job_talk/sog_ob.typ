@@ -85,7 +85,7 @@
 
 #text(20pt)[Joint work with Shidong Jiang, Jiuyang Liang, Zhenli Xu, and Qi Zhou]
 
-#text(20pt)[arXiv:2412.04595, under review at #emph[Numerische Mathematik]]
+#text(20pt)[arXiv:2412.04595]
 
 == Background
 
@@ -219,7 +219,7 @@ $
 
 
 The mid-range potential is computed by a standard Fourier spectral solver #footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],) with *little zero padding* ($lambda_z < 2$ for double precision).
-Similar to type-1 and type-2 NUFFT in 3D @barnett2019parallel.
+*No need of the kernel truncation* in the free direction due to the smoothness and separability of the Gaussian.
 
 #align(center, canvas({
   import draw: *
@@ -242,14 +242,9 @@ Similar to type-1 and type-2 NUFFT in 3D @barnett2019parallel.
   line("box4", "box5", mark: (end: "straight"))
 }))
 
+The process is similar to type-1 and type-2 NUFFT in 3D @barnett2019parallel.
+*No upsampling* is needed in gridding and gathering steps since the Fourier transform of the Gaussian decays quickly and it compensates the loss of accuracy in calculating the Fourier transform of the data.
 
-- *No need of the kernel truncation* in the free direction due to the smoothness and separability of the Gaussian.
-
-// #pagebreak()
-
-// === Difference from standard NUFFT
-
-- *No upsampling* is needed since the Fourier transform of the Gaussian decays quickly and it compensates the loss of accuracy in calculating the Fourier transform of the data.
 
 #pagebreak()
 
@@ -332,9 +327,7 @@ The method can be regarded as a 2-level DMK method @greengard2023dual.
 // - near field terms: solved by real space truncation
 // - mid-range terms: solved by the Fourier spectral method with little zero padding and no upsampling
 // - long-range terms: solved by the Fourier-Chebyshev method with $O(1)$ number of Chebyshev points
-*The solver addresses challenges arising from singularities and strong confinement,* and can be regarded as probably optimal for simulating uniform distribution with low accuracy.
-
-It has the following advantages:
+The solver *addresses challenges arising from singularities and strong confinement*, and has the following advantages:
 - spectrally accurate with rigorous error analysis @liang2025errorestimateuseriesmethod
 - need little/no zero-padding for systems that are confined in a rectangular box of high aspect ratio
 - no need for upsampling in the gridding and gathering steps
@@ -347,7 +340,7 @@ Currently, the major shortcoming of this method is its non-adaptive nature, and 
 
 #text(20pt)[Joint work with Yi-Jia Wang, Pan Zhang, and Jin-Guo Liu]
 
-#text(20pt)[arXiv:2412.07685, under review at #emph[SIAM Journal on Optimization]]
+#text(20pt)[arXiv:2412.07685]
 
 == Background
 
@@ -384,7 +377,6 @@ An independent set is a set of vertices in a graph, no two of which are adjacent
   )
 )
 MIS problem has an exponential large solution space, since it is NP-hard, no polynomial-time algorithm is known to solve it exactly.
-
 It caught much attention since the Rydberg atom systems realize spin models that naturally MIS problem @Nguyen2023QuantumOptimization.
 
 // The branching algorithms @Fomin2013 is the most widely used method to solve this problem.
@@ -960,8 +952,8 @@ Disadvantages:
 
 === Publications
 
-- *X. Gao*, S. Jiang, J. Liang, Z. Xu, and Q. Zhou, A fast spectral sum-of-Gaussians method for electrostatic summation in quasi-2D systems, Arxiv:2412.04595 (2024)
 - Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Fast algorithm for quasi-2D Coulomb systems. #emph[Journal of Computational Physics] 113733, (2025).
+- *X. Gao*, S. Jiang, J. Liang, Z. Xu, and Q. Zhou, A fast spectral sum-of-Gaussians method for electrostatic summation in quasi-2D systems, Arxiv:2412.04595 (2024)
 - Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Random batch Ewald method for dielectrically confined Coulomb systems, Arxiv:2405.06333 (2024)
 - *X. Gao* and Z. Gan, Broken symmetries in quasi-2D charged systems via negative dielectric confinement, #emph[The Journal of Chemical Physics] 161, (2024)
 
@@ -984,14 +976,14 @@ Disadvantages:
 
 - *ChebParticleMesh.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],): Toolkits for smooth particle mesh (type-1 and type-2 NUFFT).
 - *CuTropicalGEMM.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/CuTropicalGEMM.jl")],): Custom GPU kernel for tropical matrix multiplication.
-- *TreeWidthSolver.jl*#footnote(text(12pt)[#link("https://github.com/ArrogantGao/TreeWidthSolver.jl")],): Solving the treewidth problem (supported by GSoC 2024, mentored by Jinguo Liu, Jutho Heageman and Lukas Devos).
+- *TreeWidthSolver.jl*#footnote(text(12pt)[#link("https://github.com/ArrogantGao/TreeWidthSolver.jl")],): Solving the treewidth problem (supported by GSoC 2024).
 - *FastSpecSoG.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.jl")],): Implementation of the fast spectral SOG method.
 - *EwaldSummations.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/EwaldSummations.jl")],): Various Ewald summation methods with parallelization.
 - *OptimalBranching.jl*#footnote(text(12pt)[#link("https://github.com/OptimalBranching/OptimalBranching.jl")],): Implementation of the optimal branching algorithm.
 
 === Contributions to popular packages
 
-- *OMEinsum.jl*#footnote(text(12pt)[#link("https://github.com/under-Peter/OMEinsum.jl")],) (185 stars) and its backend *OMEinsumContractionOrders.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/OMEinsumContractionOrders.jl")],): Optimizing the tensor network contraction order.
+- *OMEinsum.jl*#footnote(text(12pt)[#link("https://github.com/under-Peter/OMEinsum.jl")],) (185 stars) and its backend *OMEinsumContractionOrders.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/OMEinsumContractionOrders.jl")],): Optimizing the tensor network contraction order and contracting the tensor network.
 
 #pagebreak()
 
@@ -1001,9 +993,9 @@ Disadvantages:
 === Fast Summation Algorithms
 
 // - the DMK framework to extend your current work to fully adaptive case, to other kernels, to other periodic systems 
-- Improving the performanace of our method based on packages such as FINUFFT#footnote(text(12pt)[#link("https://github.com/flatironinstitute/finufft")],) and SCTL#footnote(text(12pt)[#link("https://github.com/dmalhotra/SCTL")],).
+// - Improving the performanace of our method based on packages such as FINUFFT#footnote(text(12pt)[#link("https://github.com/flatironinstitute/finufft")],) and SCTL#footnote(text(12pt)[#link("https://github.com/dmalhotra/SCTL")],).
 // and DUCC#footnote(text(12pt)[#link("https://gitlab.mpcdf.mpg.de/mtr/ducc")],).
-- Extending our work to fully adaptive case, other kernels and other periodic systems based on the DMK framework, and write truly scalable code for simulating large systems.
+- Extending our work to fully adaptive case, other kernels and other periodic systems based on the DMK framework
 - GPU acceleration for the fast algorithms.
 
 
