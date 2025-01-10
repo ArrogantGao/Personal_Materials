@@ -961,7 +961,7 @@ Disadvantages:
 === Publications
 
 - *X. Gao*, S. Jiang, J. Liang, Z. Xu, and Q. Zhou, A fast spectral sum-of-Gaussians method for electrostatic summation in quasi-2D systems, Arxiv:2412.04595 (2024)
-- Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Fast algorithm for quasi-2D Coulomb systems, Arxiv:2403.01521 (2024). Accepted by #emph[Journal of Computational Physics].
+- Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Fast algorithm for quasi-2D Coulomb systems. #emph[Journal of Computational Physics] 113733, (2025).
 - Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Random batch Ewald method for dielectrically confined Coulomb systems, Arxiv:2405.06333 (2024)
 - *X. Gao* and Z. Gan, Broken symmetries in quasi-2D charged systems via negative dielectric confinement, #emph[The Journal of Chemical Physics] 161, (2024)
 
