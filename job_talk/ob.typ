@@ -544,7 +544,7 @@ where $s_l$ and $w_l$ are the nodes and weights of the SOG approximation.
 
 === Fast Summation Algorithms
 
-- efficient methods based on the DMK framework @jiang2023dmk
+- efficient methods based on the DMK framework
 
 // I am keen on developing efficient summation methods for long-range interacting systems, such as those described by Poisson’s equation and the Helmholtz equation. For example, I am interested in extending the recently introduced dual-space multilevel kernel-splitting (DMK) @jiang2023dmk framework to a variety of long-range interactions and systems with periodic/partially periodic boundary conditions.
 

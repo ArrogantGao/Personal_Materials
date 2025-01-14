@@ -214,7 +214,7 @@ Selecting $m$ so that $s_m < eta L_z < s_(m+1)$, where $eta$ is $O(1)$ constant.
 
 #timecounter(1)
 $
-  Phi_("mid")^l (arrow(r)) = sum_(arrow(n)) sum_(j = 1)^N q_j w_l e^(- (arrow(r) - arrow(r)_j + arrow(n) circle arrow(L))^2 / s_l^2), quad s_l < eta L_z
+  Phi_("mid")^l (arrow(r)) = sum_(arrow(n)) sum_(j = 1)^N q_j w_l e^(- (arrow(r) - arrow(r)_j + arrow(n) circle.small arrow(L))^2 / s_l^2), quad s_l < eta L_z
 $
 
 
@@ -253,12 +253,12 @@ The process is similar to type-1 and type-2 NUFFT in 3D @barnett2019parallel.
 #timecounter(1)
 
 $
-  Phi_("long")^l (arrow(r)) = sum_(arrow(n)) sum_(j = 1)^N q_j w_l e^(- (arrow(r) - arrow(r)_j + arrow(n) circle arrow(L))^2 / s_l^2), quad s_l > eta L_z
+  Phi_("long")^l (arrow(r)) = sum_(arrow(n)) sum_(j = 1)^N q_j w_l e^(- (arrow(r) - arrow(r)_j + arrow(n) circle.small arrow(L))^2 / s_l^2), quad s_l > eta L_z
 $
 
 The long-range potential is computed by a Fourier-Chebyshev solver.
 
-The extremely smooth long-range Gaussians are interpolated on the Chebyshev proxy points in $z$, similar to that of the periodic FMM, and only *$O(1)$ number of Chebyshev points are required*.
+The extremely smooth long-range Gaussians are interpolated on the Chebyshev proxy points in $z$, similar to that of the periodic FMM (Pei, Askham, Greengard & Jiang, 2023), and only *$O(1)$ number of Chebyshev points are required*.
 
 Then 2D NUFFT like steps can be used to evaluate the potential on a tensor-product grid, where upsampling is also not needed.
 
@@ -749,7 +749,7 @@ A bottle neck case has been reported in Xiao's work @Xiao2013, with a branching 
 
 #pagebreak()
 
-=== Branchmark on random graphs
+=== Benchmark on random graphs
 #timecounter(1)
 
 #leftright(
@@ -946,23 +946,18 @@ Disadvantages:
 
 = Summary and Outlook
 
-== Fast Summation Algorithms
+== Publications
 #timecounter(1)
 
 
-=== Publications
+=== Fast Summation Algorithms
 
 - Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Fast algorithm for quasi-2D Coulomb systems. #emph[Journal of Computational Physics] 113733, (2025).
 - *X. Gao*, S. Jiang, J. Liang, Z. Xu, and Q. Zhou, A fast spectral sum-of-Gaussians method for electrostatic summation in quasi-2D systems, Arxiv:2412.04595 (2024)
 - Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Random batch Ewald method for dielectrically confined Coulomb systems, Arxiv:2405.06333 (2024)
 - *X. Gao* and Z. Gan, Broken symmetries in quasi-2D charged systems via negative dielectric confinement, #emph[The Journal of Chemical Physics] 161, (2024)
 
-#pagebreak()
-
-== Tensor Network Algorithms
-#timecounter(1)
-
-=== Publications
+=== Tensor Network Algorithms
 
 - *X. Gao*, Y.-J. Wang, P. Zhang, and J.-G. Liu, Automated discovery of branching rules with optimal complexity for the maximum independent set problem, Arxiv:2412.07685 (2024)
 - *X. Gao*, X. Li, and J. Liu, Programming guide for solving constraint satisfaction problems with tensor networks, Arxiv:2501.00227 (2024)
@@ -974,7 +969,7 @@ Disadvantages:
 
 === My packages
 
-- *ChebParticleMesh.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],): Toolkits for smooth particle mesh (type-1 and type-2 NUFFT).
+- *ChebParticleMesh.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],): Toolkits for particle mesh methods (type-1 and type-2 NUFFT).
 - *CuTropicalGEMM.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/CuTropicalGEMM.jl")],): Custom GPU kernel for tropical matrix multiplication.
 - *TreeWidthSolver.jl*#footnote(text(12pt)[#link("https://github.com/ArrogantGao/TreeWidthSolver.jl")],): Solving the treewidth problem (supported by GSoC 2024).
 - *FastSpecSoG.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.jl")],): Implementation of the fast spectral SOG method.
