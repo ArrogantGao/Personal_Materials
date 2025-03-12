@@ -9,7 +9,7 @@
   address: [Hong Kong University of Science and Technology, Hong Kong SAR, China],
   lastupdated: "true",
   pagecount: "true",
-  date: [2024-12-09],
+  date: [2025-03-12],
   contacts: (
     (text: [xz.gao\@connect.ust.hk], link: "mailto:xz.gao@connect.ust.hk"),
     (text: [github.com/ArrogantGao], link: "https://github.com/ArrogantGao"),
@@ -44,29 +44,35 @@ I have also concentrated on tensor network-based algorithms for combinatorial op
 #section("Publications")
 #subsection("Peer-reviewed Publications")
 
-@gao2024broken
+@gan2024fast
 
 @roa2024probabilistic
+
+@gao2024broken
 
 @nanolett2020
 #subsectionsep
 #subsection("Manuscripts Under Review")
 
-@gan2024fast Under 2nd round of revision at The Journal of Computational Physics.
+@complexitypaper
 
-@gan2024random Under 1st round of revision at The SIAM Journal on Scientific Computing.
+@gan2024random
 
 @fssog
 
 @tensorbranching
 
-@complexitypaper
 #subsectionsep
 #subsection("In Draft (preprint available upon request)")
 
 @quasiewald
 
+@icm_error
+
 #sectionsep
+
+#pagebreak()
+
 #section("Software Packages")
 #oneline-title-item(
   title: [#link("https://github.com/HPMolSim/ExTinyMD.jl")[ExTinyMD.jl]],
