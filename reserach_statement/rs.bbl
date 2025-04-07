@@ -5,16 +5,16 @@ Matthew Fishman, Steven~R. White, and E.~Miles Stoudenmire.
 \newblock The {IT}ensor software library for tensor network calculations.
 \newblock {\em SciPost Phys. Codebases}, page~4, 2022.
 
-\bibitem{gan2024random}
-Zecheng Gan, Xuanzhao Gao, Jiuyang Liang, and Zhenli Xu.
-\newblock Random batch {E}wald method for dielectrically confined {C}oulomb systems.
-\newblock {\em arXiv preprint arXiv:2405.06333}, 2024.
-\newblock Under the 1st round of revision at the SIAM Journal on Scientific Computing.
-
 \bibitem{gan2024fast}
 Zecheng Gan, Xuanzhao Gao, Jiuyang Liang, and Zhenli Xu.
 \newblock Fast algorithm for quasi-2d coulomb systems.
 \newblock {\em Journal of Computational Physics}, 524:113733, 2025.
+
+\bibitem{gan2024random}
+Zecheng Gan, Xuanzhao Gao, Jiuyang Liang, and Zhenli Xu.
+\newblock Random batch {E}wald method for dielectrically confined {C}oulomb systems.
+\newblock {\em arXiv preprint arXiv:2405.06333}, 2025.
+\newblock Accepted by SIAM Journal on Scientific Computing.
 
 \bibitem{gao2024broken}
 Xuanzhao Gao and Zecheng Gan.
@@ -35,7 +35,7 @@ Xuanzhao Gao, Shidong Jiang, Jiuyang Liang, Zhenli Xu, and Qi~Zhou.
 \bibitem{complexitypaper}
 Xuanzhao Gao, Xiaofeng Li, and Jinguo Liu.
 \newblock Programming guide for solving constraint satisfaction problems with tensor networks.
-\newblock {\em arXiv preprint arXiv:2501.00227}, 2024.
+\newblock {\em Chinese Physics B}, 2025.
 
 \bibitem{tensorbranching}
 Xuanzhao Gao, Yi-Jia Wang, Pan Zhang, and Jin-Guo Liu.

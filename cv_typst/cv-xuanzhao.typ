@@ -9,7 +9,7 @@
   address: [Hong Kong University of Science and Technology, Hong Kong SAR, China],
   lastupdated: "true",
   pagecount: "true",
-  date: [2025-03-12],
+  date: [2025-04-07],
   contacts: (
     (text: [xz.gao\@connect.ust.hk], link: "mailto:xz.gao@connect.ust.hk"),
     (text: [github.com/ArrogantGao], link: "https://github.com/ArrogantGao"),
@@ -44,6 +44,10 @@ I have also concentrated on tensor network-based algorithms for combinatorial op
 #section("Publications")
 #subsection("Peer-reviewed Publications")
 
+@gan2024random, accepted by SIAM Journal on Scientific Computing
+
+@complexitypaper
+
 @gan2024fast
 
 @roa2024probabilistic
@@ -54,9 +58,7 @@ I have also concentrated on tensor network-based algorithms for combinatorial op
 #subsectionsep
 #subsection("Manuscripts Under Review")
 
-@complexitypaper
-
-@gan2024random
+@icm_error
 
 @fssog
 
@@ -66,8 +68,6 @@ I have also concentrated on tensor network-based algorithms for combinatorial op
 #subsection("In Draft (preprint available upon request)")
 
 @quasiewald
-
-@icm_error
 
 #sectionsep
 
