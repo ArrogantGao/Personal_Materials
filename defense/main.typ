@@ -75,12 +75,40 @@
 
 #title-slide()
 
+#pagebreak()
+
+== Self-introduction
+
+=== Education background
+
+- *2021 - now*: PhD in Advanced Materials Thust, Function Hub, Hong Kong University of Science and Technology (Guangzhou). Majoring in Applied Mathematics.
+- *2017 - 2021*: Bachelor in School of the Gifted Young, University of Science and Technology of China. Majoring in Physics and Computer Science.
+
+=== Research interests
+
+- Fast summation algorithms for quasi-2D charged systems.
+- Tensor network methods for combinatorial optimization problems.
+
 = Outline <touying:hidden>
 
 #outline(title: none, indent: 1em, depth: 1)
 
 
 = Background
+
+== Molecular dynamics simulation
+
+Molecular dynamics simulation is a widely used method to study the motion of atoms and molecules, which plays a key role in many fields, including materials science, biophysics, and drug design.
+
+#figure(
+  grid(columns: 3, 
+    image("figs/pnas.2102516118fig01.jpg", width: 450pt),
+    h(50pt),
+    image("figs/MD_workflow.png", width: 200pt),
+  ),
+  caption: [#text(15pt)[(Left) Study of the structure of SARS-CoV-2 replication-transcription complex by molecular dynamics simulation @brandon2021structural. (Right) Illustration of the workflow of molecular dynamics simulation.]],
+)
+
 
 == Quasi-2D charged systems
 
@@ -118,7 +146,7 @@ Complexity of a direct sum of the Coulomb interaction in doubly periodic systems
 Polarizable surfaces also play a key role in nature, which arise naturally due to dielectric mismatch between different materials, leading to ion transport in nanochannels, pattern formation and self-assembly of colloidal and polymer monolayers.
 
 #figure(
-  image("figs/pattern.png", width: 350pt),
+  image("figs/pattern.png", width: 400pt),
   caption: [#text(15pt)[Pattern formation in 2D dipolar systems due to dielectric mismatch @wang2019dielectric.]],
 )
 
@@ -171,7 +199,68 @@ These methods are also accelerated by FFT or FMM to reach a complexity of $O(N l
 However, the computational cost significantly increases compared to the homogeneous case, especially for strongly confined systems.
 Rugious error analysis and parameter selection are also in lack.
 
-= Theoretical Analysis
+== Ewald summations revisited
+
+Key point: handle short-range and long-range contributions separately.
+
+$
+  1 / r = underbrace((1 - "erf"(alpha r)) / r, "short-range") + underbrace("erf"(alpha r) / r, "long-range") = "erfc"(alpha r) / r + "erf"(alpha r) / r
+$
+
+#align(center,
+  image("figs/erf.png", width: 400pt),
+)
+
+#pagebreak()
+
+The short-range part is summed in the real space, and the long-range part is summed in the Fourier space.
+The total interaction energy can be computed as follows:
+$
+  U_s = 1 / 2 sum_(i,j=1)^N sum_(bold(m)) q_i q_j "erfc"(alpha |r_i - r_j + L_bold(m)|) / abs(r_i - r_j + L_bold(m))
+$
+$
+  U_l = pi / (2 L_x L_y) sum_(i,j=1)^N q_i q_j sum_(bold(h) != bold(0)) e^(i bold(h) dot (r_i - r_j)) G_alpha (bold(h), z_i - z_j) - alpha / sqrt(pi) sum_(i=1)^N q_i^2 + J_0
+$
+where $bold(h) = ((2 pi m_x) / L_x, (2 pi m_y) / L_y)$ is the reciprocal lattice vector, and
+$
+  J_0 = -pi / (L_x L_y) sum_(i,j=1)^N q_i q_j ("erf"(alpha |z_i - z_j|) + alpha / sqrt(pi) e^(- alpha^2 (z_i - z_j)^2)) \
+  G_alpha (bold(h), z) = xi^+ (bold(h), z) + xi^- (bold(h), z) = e^(-h z) "erfc"(h / (2 alpha) + alpha z) + e^(h z) "erfc"(h / (2 alpha) - alpha z)
+$
+
+The resulting method is the so-called Ewald2D method with *$O(N^2 log(epsilon))$* complexity.
+
+== Ewald summations revisited
+
+One way to accelerate the summation is transforming the system as triply periodic one by adding vacuum layer in the $z$ direction.
+
+#align(center,
+  image("figs/vacuum_layer.png", width: 200pt),
+)
+
+The summation is reformulated as:
+$
+  U_l = underbrace((2 pi) / (L_x L_y L_z) sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 (sum_(i = 1)^N q_i e^(i k r_i))^2 - alpha / sqrt(pi) sum_(i=1)^N q_i^2, "Ewald3D summation") + underbrace(U_("YB") + U_("ELC") , "correction terms") + U_("Trap")
+$
+where $k = 2 pi (m_x / L_x, m_y / L_y, m_z / L_z)$ is the reciprocal lattice vector.
+Complexity of EwaldELC method is *$O(N^(1.5))$*, and can easily be accelerated by FFT or FMM to reach linear complexity.
+
+== Random batch Ewald revisited
+
+Random batch Ewald method @Jin2020SISC is a stochastic method proposed to accelerate the Ewald3D summation.
+The main idea is to sample the long-range part in the Fourier space using importance sampling instead of summing over all the Fourier modes.
+$
+  sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 (sum_(i = 1)^N q_i e^(i k r_i))^2 approx (sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2))) / P sum_(k in cal(K)_P) 1 / k^2 (sum_(i = 1)^N q_i e^(i k r_i))^2,
+$
+where $cal(K)_P$ is the set of $P$ Fourier modes sampled from the distribution $cal(P) (k) ~ e^(- k^2 / (4 alpha^2))$.
+$P$ is proven to be an $O(1)$ constant so that the total complexity is $O(N)$.
+
+#figure(
+  grid(columns:2, gutter: 25pt, 
+    image("figs/rbe_accuracy.png", height: 220pt),
+    image("figs/rbe_scale.png", height: 220pt),
+  ),
+  caption: [#text(15pt)[Accuracy and scalability of random batch Ewald method @liang2022superscalability.]],
+)
 
 == Image charge method revisited
 
@@ -218,65 +307,78 @@ $
   image("figs/icm_system.png", width: 500pt)
 )
 
-== Ewald summations revisited
+= Theoretical Analysis
 
-Key point: handle short-range and long-range contributions separately.
+== Error estimation for Ewald summations
 
-$
-  1 / r = underbrace((1 - "erf"(alpha r)) / r, "short-range") + underbrace("erf"(alpha r) / r, "long-range") = "erfc"(alpha r) / r + "erf"(alpha r) / r
-$
-
-#align(center,
-  image("figs/erf.png", width: 400pt),
-)
-
-#pagebreak()
-
-The short-range part is summed in the real space, and the long-range part is summed in the Fourier space.
-The total interaction energy can be computed as follows:
-$
-  U_s = 1 / 2 sum_(i,j=1)^N sum_(bold(m)) q_i q_j "erfc"(alpha |r_i - r_j + L_bold(m)|) / abs(r_i - r_j + L_bold(m))
-$
-$
-  U_l = pi / (2 L_x L_y) sum_(i,j=1)^N q_i q_j sum_(bold(h) != bold(0)) e^(i bold(h) dot (r_i - r_j)) G_alpha (bold(h), z_i - z_j) - alpha / sqrt(pi) sum_(i=1)^N q_i^2 + J_0
-$
-where $bold(h) = ((2 pi m_x) / L_x, (2 pi m_y) / L_y)$ is the reciprocal lattice vector, and
-$
-  J_0 = -pi / (L_x L_y) sum_(i,j=1)^N q_i q_j ("erf"(alpha |z_i - z_j|) + alpha / sqrt(pi) e^(- alpha^2 (z_i - z_j)^2)) \
-  G_alpha (bold(h), z) = xi^+ (bold(h), z) + xi^- (bold(h), z) = e^(-h z) "erfc"(h / (2 alpha) + alpha z) + e^(h z) "erfc"(h / (2 alpha) - alpha z)
-$
-
-The resulting method is the so-called Ewald2D method with $O(N^2 log(epsilon))$ complexity.
-
-== Ewald summations revisited
-
-One way to accelerate the summation is transforming the system as triply periodic one by adding vacuum layer in the $z$ direction.
-
-#align(center,
-  image("figs/vacuum_layer.png", width: 200pt),
-)
-
-Then the summation is reformulated as:
-$
-  U_l = underbrace((2 pi) / (L_x L_y L_z) sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 (sum_(i = 1)^N q_i e^(i k r_i))^2 - alpha / sqrt(pi) sum_(i=1)^N q_i^2, "Ewald3D summation") + underbrace(U_("YB") + U_("ELC") , "correction terms") + U_("Trap")
-$
-where $k = 2 pi (m_x / L_x, m_y / L_y, m_z / L_z)$ is the reciprocal lattice vector.
-Complexity is of EwaldELC method is $O(N^(1.5))$, and can easily be accelerated by FFT or FMM.
-
-== Error estimation and parameter selection
-
-When combined with image charge method, the error become quite complex.
+When combined with image charge method, the error of EwaldELC method is quite complex.
 
 #figure(
   image("figs/error_yuan.png", width: 500pt),
   caption: [#text(15pt)[Relative precision in the electrostatic energy computed by ICM-PPPM as a function of the number of reciprocal reflections and the slab factor for a 2:1 salt confined between dielectric interfaces @yuan2021particle.]],
 )
 
-= Random Batch Ewald2D Method
+A rigorous error analysis is thus very important for the effective application of the EwaldELC method in systems with dielectric confinement.
 
-== The Algorithm
+#pagebreak()
+
+We show the error of ICM-EwaldELC method is given as follows:
+$
+  cal(E) ~ 
+$
+
+= Algorithms for Q2D Systems
+
+== Sum-of-Exponential Ewald2D method
+
+For Q2D systems in homogeneous media, we developed an stochastic method based on the *sum-of-Exponential approximation*, which approximate the Gaussian kernel by a sum of exponential functions, so that:
+$
+  abs(e^(-x^2) - sum_(l=1)^M w_l e^(- s_l abs(x))) < epsilon
+$
+and transform the pairwise summation in Ewald2D summation into pairwise summations of exponential functions so that can be computed in linear complexity.
+Further combined with the random batch sampling, we achieve a $O(N)$ complexity for the Q2D systems in homogeneous media.
+
+The resulting method #footnote(text(12pt)[#link("https://github.com/HPMolSim/SoEwald2D.jl")],) is *mesh free* and is *not sensitive to the aspect ratio of the system*.
+
+#pagebreak()
+
+#figure(
+  image("figs/soe_accuracy.png", width: 500pt),
+  caption: [#text(15pt)[Accuracy of SOEwald2D method.]],
+)
+
+#figure(
+  image("figs/soe_runtime.png", width: 300pt),
+  caption: [#text(15pt)[Runtime of SOEwald2D method.]],
+)
+
+== Random batch Ewald2D method
 
 rbe2d
+
+== Quasi-Ewald method
+
+qem
+
+== Short summary
+
+In summary, we developed a series of methods for simulating quasi-2D charged systems, including:
+
+- Sum-of-Exponential Ewald2D method for non-dielectrically confined systems.
+- Random batch Ewald2D method for dielectrically confined systems.
+- Quasi-Ewald method for negatively confined systems.
+
+=== Advantages
+
+- Mesh free, only use simply data structure.
+- Not sensitive to the aspect ratio of the system.
+- Parallelizable and scalable.
+
+=== Disadvantages
+
+- Stochastic, replying on law of large numbers.
+- Limited to planar systems with uniform dielectric constant.
+- Strong convergence and ergodicity remaining an open question.
 
 = Applications in MD Simulations
 
@@ -308,66 +410,48 @@ We further applied our method to the simulations of SPC/E water confined by slab
   caption: [#text(15pt)[Time cost of all-atom simulations of SPC/E water in homogeneous media and confined by slabs with different dielectric constants.]],
 )
 
+== Broken symmetries via dielectric confinements
 
-= Introduction to Other Works
-
-== Sum-of-Exponential Ewald2D method
-
-For Q2D systems in homogeneous media, we developed an stochastic method based on the *sum-of-Exponential approximation*, which approximate the Gaussian kernel by a sum of exponential functions, so that:
-$
-  abs(e^(-x^2) - sum_(l=1)^M w_l e^(- s_l abs(x))) < epsilon
-$
-and transform the pairwise summation in Ewald2D summation into pairwise summations of exponential functions so that can be computed in linear complexity.
-Further combined with the random batch sampling, we achieve a $O(N)$ complexity for the Q2D systems in homogeneous media.
-
-The resulting method #footnote(text(12pt)[#link("https://github.com/HPMolSim/SoEwald2D.jl")],) is *mesh free* and is *not sensitive to the aspect ratio of the system*.
-
-#pagebreak()
+With the help of the quasi Ewald method, we observed spontaneous symmetry broken via dielectric confinements when $abs(gamma) > 1$.
 
 #figure(
-  image("figs/soe_accuracy.png", width: 500pt),
-  caption: [#text(15pt)[Accuracy of SOEwald2D method.]],
-)
-
-#figure(
-  image("figs/soe_runtime.png", width: 300pt),
-  caption: [#text(15pt)[Runtime of SOEwald2D method.]],
-)
-
-== Fast spectral sum-of-Gaussians method
-
-Based on the sum-of-Gaussian approximation of the Coulomb kernel and non-uniform fast Fourier transform, we developed a fast spectral method for the Q2D systems in homogeneous media.
-We split the Coulomb kernel into three parts:
-$
-  1 / r approx underbrace(( 1 / r - sum_(l = 0)^M w_l e^(- r^2 / s_l^2)) bb(1)_(r < r_c), "near-field")+ underbrace(sum_(l = 0)^m w_l e^(- r^2 / s_l^2), "mid-range") + underbrace(sum_(l = m + 1)^M w_l e^(- r^2 / s_l^2), "long-range")
-$
-
-The mid-range potential is computed by a standard Fourier spectral solver #footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],) with *little zero padding* ($lambda_z < 2$ for double precision).
-*No need of the kernel truncation* in the free direction due to the smoothness and separability of the Gaussian.
-
-The extremely smooth long-range Gaussians are interpolated on the Chebyshev proxy points in $z$, similar to that of the periodic FMM (Pei, Askham, Greengard & Jiang, 2023), and only *$O(1)$ number of Chebyshev points are required*.
-
-#pagebreak()
-
-
-The method #footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.jl")],) is benchmarked on the following systems:
-- Cubic systems with fixed aspect ratio equals to $1$.
-- Strongly confined systems with fixed $L_z$, aspect ratio up to $10^(3.5)$
-
-#figure(
-  image("figs/sog_benchmark.png", width: 370pt),
-  caption: [#text(15pt)[Error and time cost for the SOG method in the (a,c) cubic and (b,d) strongly confined systems.]],
-)
-
-== Quasi Ewald method and broken symmetries via dielectric confinements
-
-Quasi Ewald method #footnote(text(12pt)[#link("https://github.com/HPMolSim/QuasiEwald.jl")],) is developed to simulate negatively confined quasi-2D systems, where $abs(gamma) > 1$ so that the image charge series diverges.
-With the help of the quasi Ewald method, we observed spontaneous symmetry broken via dielectric confinements.
-
-#figure(
-  image("figs/ssb.jpg", width: 480pt),
+  image("figs/ssb.png", width: 700pt),
   caption: [#text(15pt)[Spontaneous symmetry broken via dielectric confinements.]],
 )
+
+#pagebreak()
+
+#figure(
+  image("figs/ssb_force.png", width: 600pt),
+  caption: [#text(15pt)[Detailed force analysis of the symmetry broken phase.]],
+)
+
+// = Introduction to Other Works
+
+// == Fast spectral sum-of-Gaussians method
+
+// Based on the sum-of-Gaussian approximation of the Coulomb kernel and non-uniform fast Fourier transform, we developed a fast spectral method for the Q2D systems in homogeneous media.
+// We split the Coulomb kernel into three parts:
+// $
+//   1 / r approx underbrace(( 1 / r - sum_(l = 0)^M w_l e^(- r^2 / s_l^2)) bb(1)_(r < r_c), "near-field")+ underbrace(sum_(l = 0)^m w_l e^(- r^2 / s_l^2), "mid-range") + underbrace(sum_(l = m + 1)^M w_l e^(- r^2 / s_l^2), "long-range")
+// $
+
+// The mid-range potential is computed by a standard Fourier spectral solver #footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],) with *little zero padding* ($lambda_z < 2$ for double precision).
+// *No need of the kernel truncation* in the free direction due to the smoothness and separability of the Gaussian.
+
+// The extremely smooth long-range Gaussians are interpolated on the Chebyshev proxy points in $z$, similar to that of the periodic FMM (Pei, Askham, Greengard & Jiang, 2023), and only *$O(1)$ number of Chebyshev points are required*.
+
+// #pagebreak()
+
+
+// The method #footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.jl")],) is benchmarked on the following systems:
+// - Cubic systems with fixed aspect ratio equals to $1$.
+// - Strongly confined systems with fixed $L_z$, aspect ratio up to $10^(3.5)$
+
+// #figure(
+//   image("figs/sog_benchmark.png", width: 370pt),
+//   caption: [#text(15pt)[Error and time cost for the SOG method in the (a,c) cubic and (b,d) strongly confined systems.]],
+// )
 
 = Summary and Outlook
 
@@ -377,13 +461,18 @@ During my PhD, I focused on confined quasi-2D charged systems, including:
 
 - Theoretical analysis of Ewald summation for dielectric-confined planar systems.
 
-- Development of novel fast algorithms for simulating quasi-2D Coulomb systems, including both stochastic methods and spectral methods.
+- Development of novel fast algorithms for simulating quasi-2D Coulomb systems, including both stochastic methods and spectral methods, for non-dielectrically confined systems, dielectrically confined systems, and negatively confined systems.
 
-// - Application of the methods to the simulation of all-atom water models confined by slabs.
-
-- Observation of spontaneous symmetry broken solely via dielectric confinements for the first time.
+- Applications in MD simulations, including all-atom simulations of SPC/E water, and the observation of spontaneous symmetry broken solely via dielectric confinements for the first time.
 
 
+== Future works
+
+- Extend our methods to more complex systems, including systems with complex geometries such as curved surfaces and polarizable particles.
+
+- Extend our methods to different interaction kernels, such as the dipolar interactions, the Stokes interactions and the Yukawa interactions.
+
+- Application to the simulation of real world systems, such as biomolecular systems and colloidal systems.
 
 == Publications
 #timecounter(1)
@@ -404,7 +493,7 @@ During my PhD, I focused on confined quasi-2D charged systems, including:
 
 == Software packages
 
-=== My packages
+// === My packages
 
 - *ChebParticleMesh.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],): Toolkits for particle mesh methods (type-1 and type-2 NUFFT).
 - *CuTropicalGEMM.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/CuTropicalGEMM.jl")],): Custom GPU kernel for tropical matrix multiplication.
@@ -413,23 +502,15 @@ During my PhD, I focused on confined quasi-2D charged systems, including:
 - *EwaldSummations.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/EwaldSummations.jl")],): Various Ewald summation methods with parallelization.
 - *OptimalBranching.jl*#footnote(text(12pt)[#link("https://github.com/OptimalBranching/OptimalBranching.jl")],): Implementation of the optimal branching algorithm.
 
-=== Contributions to popular packages
+// === Contributions to popular packages
 
-- *OMEinsum.jl*#footnote(text(12pt)[#link("https://github.com/under-Peter/OMEinsum.jl")],) (185 stars) and its backend *OMEinsumContractionOrders.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/OMEinsumContractionOrders.jl")],): Optimizing the tensor network contraction order and contracting the tensor network.
-
-#pagebreak()
-
-// == Future Research Plans
-// #timecounter(1)
-
-// === Fast Summation Algorithms
-
-
-// #pagebreak()
+// - *OMEinsum.jl*#footnote(text(12pt)[#link("https://github.com/under-Peter/OMEinsum.jl")],) (185 stars) and its backend *OMEinsumContractionOrders.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/OMEinsumContractionOrders.jl")],): Optimizing the tensor network contraction order and contracting the tensor network.
 
 = Acknowledgements
 
 #pagebreak()
+
+== Acknowledgements
 
 #let figsize = 130pt
 
