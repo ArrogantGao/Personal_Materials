@@ -219,7 +219,7 @@ $
   U_s = 1 / 2 sum_(i,j=1)^N sum_(bold(m)) q_i q_j "erfc"(alpha |r_i - r_j + L_bold(m)|) / abs(r_i - r_j + L_bold(m))
 $
 $
-  U_l = pi / (2 L_x L_y) sum_(i,j=1)^N q_i q_j sum_(bold(h) != bold(0)) e^(i bold(h) dot (r_i - r_j)) G_alpha (bold(h), z_i - z_j) - alpha / sqrt(pi) sum_(i=1)^N q_i^2 + J_0
+  U_l = pi / (2 L_x L_y) sum_(i,j=1)^N q_i q_j sum_(bold(h) != bold(0)) e^(i bold(h) dot (r_i - r_j)) / h G_alpha (bold(h), z_i - z_j) - alpha / sqrt(pi) sum_(i=1)^N q_i^2 + J_0
 $
 where $bold(h) = ((2 pi m_x) / L_x, (2 pi m_y) / L_y)$ is the reciprocal lattice vector, and
 $
@@ -309,7 +309,7 @@ $
 
 = Theoretical Analysis
 
-== Error estimation for Ewald summations
+== Error estimation
 
 When combined with image charge method, the error of EwaldELC method is quite complex.
 
@@ -322,34 +322,245 @@ A rigorous error analysis is thus very important for the effective application o
 
 #pagebreak()
 
-We show the error of ICM-EwaldELC method is given as follows:
+In our work @icm_error, we show that the error of ICM-EwaldELC method is given as follows:
 $
-  cal(E) ~ 
+  cal(E) ~  underbrace(O(e^(-s^2) / (s^2)), "Ewald sum") + underbrace(O(abs(gamma_u gamma_d)^(floor((M + 1) / 2)) e^( - (4 pi H floor((M + 1) / 2)) / max(L_x, L_y) )), "Image charge") + underbrace(O(e^( - alpha^2 (L_z - H)^2 ) ), "Trapezoidal rule") \ + underbrace(O(e^( - (2 pi (L_z - H)) / max(L_x, L_y) ) + sum_(l=1)^M (abs(gamma_d^(ceil(l/2)) gamma_u^(floor(l/2))) + abs(gamma_d^(floor(l/2)) gamma_u^(ceil(l/2)))) e^( - (2 pi (L_z - (l + 1) H)) / max(L_x, L_y) )), "ELC term")
 $
+with the assumption that $abs(gamma_u) <= 1$ and $abs(gamma_d) <= 1$.
+
+#pagebreak()
+
+=== Image charge series
+
+Error induced by truncation of the image charge series decays exponentially with the layer number $M$, the speed depends on $gamma$ and aspect ratio $H / max(L_x, L_y)$.
+$
+  cal(E) ~ O(abs(gamma_u gamma_d)^(floor((M + 1) / 2)) e^( - (4 pi H floor((M + 1) / 2)) / max(L_x, L_y) ))
+$
+
+#figure(
+  image("figs/icm_image_charge_error.png", width: 550pt),
+  caption: [#text(15pt)[Error of image charge series as a function of the layer number $M$ for different $gamma$ and aspect ratio $H / max(L_x, L_y)$, the dashed lines are fitted according to the theoretical prediction.]],
+)
+
+#pagebreak()
+
+=== ELC term
+
+First consider the case when $gamma_u = gamma_d = 0$, i.e., the system is homogeneous, then
+$
+  cal(E) ~ O(e^( - (2 pi (L_z - H)) / max(L_x, L_y)))
+$
+we thus define the padding ratio $R = (L_z - H) / max(L_x, L_y)$, and ELC term decays exponentially with $R$.
+
+#figure(
+  image("figs/icm_elc.png", width: 300pt),
+  caption: [#text(15pt)[Error of ELC term as a function of the padding ratio $R$ for different aspect ratio.]],
+)
+
+#pagebreak()
+
+If $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) <= 1$, the ELC term is a constant independent of $M$:
+$
+  cal(E) ~ O((gamma_u e^((2 pi H) / max(L_x, L_y)) + gamma_d e^((2 pi H) / max(L_x, L_y)) + 2)e^( - (2 pi (L_z - H)) / max(L_x, L_y)))
+$
+
+#figure(
+  image("figs/icm_elc_decay.png", width: 600pt),
+  caption: [#text(15pt)[Error of ELC term as a function of $M$ and $R$. We fix $L_x = L_y = 10$, $H = 0.5$ and $gamma_u = gamma_d = 0.6$ so that $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) < 1$]],
+)
+
+#pagebreak()
+
+Interestingly, if $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) > 1$, the ELC term grows exponentially to $M$:
+$
+  cal(E) ~ O(abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y)))^(M / 2) e^(- (2 pi (L_z - H)) / max(L_x, L_y)))
+$
+
+#figure(
+  image("figs/icm_elc_increase.png", width: 600pt),
+  caption: [#text(15pt)[Error of ELC term as a function of $M$ and $R$. We fix $L_x = L_y = 10$, $H = 0.5$ and $gamma_u = gamma_d = 1$ so that $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) > 1$]],
+)
+
+#pagebreak()
+
+Our results well explain the behavior of the error of ICM-EwaldELC method in the literature @yuan2021particle.
+
+#figure(
+  image("figs/icm_error_yuan.png", width: 700pt),
+  caption: [#text(15pt)[Repeat of the results in @yuan2021particle with fitted lines according to our theoretical prediction, where $L_x = L_y = 15$, $H = 5$. The system is a 2:1 electrolyte with $39$ particles.]],
+)
+
+== Parameter selection
+
+Given the system size $L_x, L_y, H$, the dielectric constants $epsilon_u, epsilon_d, epsilon_c$, and desired precision $epsilon$, we can select the parameters as follows:
+
+*Step 1*:
+Select the layer number $M$:
+$
+  M ~ (2 log(epsilon) - (4 pi H) / max(L_x, L_y) - log(abs(gamma_u gamma_d))) / (log(abs(gamma_u gamma_d)) - (4 pi H) / max(L_x, L_y))
+$
+
+*Step 2*:
+Select height of the vacuum layer $L_z$:
+- Case 1: $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) < 1$
+$
+  L_z >= H + (max(L_x, L_y) / (2 pi)) (log(1 / epsilon) + log(abs(gamma_u + gamma_d + e^(-2 pi H / max(L_x, L_y)))))
+$
+- Case 2: $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) >= 1$
+$
+  L_z >= (M + 1) H + (max(L_x, L_y) / (2 pi)) (log(1 / epsilon) + log(abs(gamma_u gamma_d)))
+$ 
+
+*Step 3*:
+Select $alpha$ and $s$ for Ewald splitting: $alpha >= sqrt(- log(epsilon)) / (L_z - H)$, $e^(-s^2) / s^2 <= epsilon$
+
+#pagebreak()
+
+We applied our method for system with $L_x = L_y = 10$, $H = 1$, $gamma_u = gamma_d = 0.6$ and $1$.
+
+#align(center,
+  grid(columns:2, gutter: 15pt, 
+    image("figs/icm_parameter_table.png", width: 200pt),
+    figure(
+      image("figs/icm_parameter_benchmark.png", width: 450pt),
+      caption: [#text(15pt)[Numerical tests for the parameter selection. Dashed lines are numerically error, dots are pre-selected parameters.]],
+    ),
+  )
+)
 
 = Algorithms for Q2D Systems
 
+== Overview
+
+=== Sum-of-Exponential Ewald2D method
+- For the Q2D systems in homogeneous media.
+- Reduce the complexity of double summation to $O(N)$ via SOE approximation.
+- Numerically stable.
+
+=== Random batch Ewald2D method
+- For the dielectrically confined Q2D systems.
+- Reduce the complexity of ICM-EwaldELC based method from $O(M N)$ to $O(M + N)$.
+- Parallelizable and scalable.
+
+=== Quasi-Ewald method
+- For the negatively confined Q2D systems.
+- Remove the divergence due to negative dielectric constant via singularity subtractions.
+
+
 == Sum-of-Exponential Ewald2D method
 
-For Q2D systems in homogeneous media, we developed an stochastic method based on the *sum-of-Exponential approximation*, which approximate the Gaussian kernel by a sum of exponential functions, so that:
-$
-  abs(e^(-x^2) - sum_(l=1)^M w_l e^(- s_l abs(x))) < epsilon
-$
-and transform the pairwise summation in Ewald2D summation into pairwise summations of exponential functions so that can be computed in linear complexity.
-Further combined with the random batch sampling, we achieve a $O(N)$ complexity for the Q2D systems in homogeneous media.
+=== Sum-of-Exponential approximation
 
-The resulting method #footnote(text(12pt)[#link("https://github.com/HPMolSim/SoEwald2D.jl")],) is *mesh free* and is *not sensitive to the aspect ratio of the system*.
+Approximating an arbitrary function $f(x)$ by a sum of exponential functions:
+$
+  abs(f(x) - sum_(l=1)^M w_l e^(- s_l abs(x))) < epsilon
+$
+For Gaussian kernel, VPMR method @AAMM-13-1126 is shown to be an optimal choice:
+
+#figure(
+  image("figs/soe_vpmr.png", width: 400pt),
+  caption: [#text(15pt)[Approximation of Gaussian kernel by VPMR method.]],
+)
+
+#pagebreak()
+
+=== SOE + Ewald2D
+
+Main problem of Ewald2D method: double summation, resulting in $O(N^2)$ complexity.
+$
+  sum_(i, j) q_i q_j e^(i h rho_(i j)) (e^(-h z) "erfc"(h / (2 alpha) + alpha z) + e^(h z) "erfc"(h / (2 alpha) - alpha z))
+$
+where $z = abs(z_i - z_j)$. Notice that
+$
+  xi^+ = e^( - h z) "erfc"(h / (2 alpha) + alpha z) =  (2 alpha) / sqrt(pi) e^(-h^2 / (4 alpha^2)) e^(-h z) integral_(-z)^infinity e^(- alpha^2 t^2) e^(-h t) d t\
+  xi^- = e^(h z) "erfc"(h / (2 alpha) - alpha z) =  (2 alpha) / sqrt(pi) e^(-h^2 / (4 alpha^2)) e^(h z) integral_z^infinity e^(- alpha^2 t^2) e^(-h t) d t
+  // e^(-alpha^2 t^2) approx sum_(l=1)^M w_l e^(- s_l alpha abs(t))
+$
+Then the integral can be calculated analytically:
+$
+  xi^+ approx (2 alpha) / sqrt(pi) e^(-h^2 / (4 alpha^2)) e^(-h z) integral_(-z)^infinity sum_(l=1)^M w_l e^(- s_l alpha abs(t)) e^(-h t) d t = (2 alpha) / sqrt(pi) e^(-h^2 / (4 alpha^2)) sum_(l=1)^M w_l e^(- s_l alpha z) / (alpha s_l + h) \
+  xi^- approx (2 alpha) / sqrt(pi) e^(-h^2 / (4 alpha^2)) e^(h z) integral_z^infinity sum_(l=1)^M w_l e^(- s_l alpha abs(t)) e^(-h t) d t = (2 alpha) / sqrt(pi) e^(-h^2 / (4 alpha^2)) sum_(l=1)^M w_l (-e^(- s_l alpha z) / (alpha s_l - h) + (2 alpha s_l e^(-h z)) / ((alpha s_l)^2 - h^2))
+$
 
 #pagebreak()
 
 #figure(
-  image("figs/soe_accuracy.png", width: 500pt),
-  caption: [#text(15pt)[Accuracy of SOEwald2D method.]],
+  image("figs/soe_xi.png", width: 600pt),
+  caption: [#text(15pt)[Absolute error of approximating $xi^+$ and $xi^-$ as a function of $h$ and $z$.]],
 )
 
+#pagebreak()
+
+=== Summing up exponentials
+
+Now we have the following double summation:
+$
+  S = sum_(i, j) q_i q_j e^(-h abs(z_i - z_j))
+$
+Direct sum still leads to $O(N^2)$ complexity.
+To reduce the complexity, we first sort the particles in $z$ direction, so that
+$
+  0 < z_1 < z_2 < ... < z_N < H
+$
+Then we can rewrite the summation as follows:
+$
+  S = 2 sum_(i=1)^N sum_(j=i + 1)^N q_i q_j e^(-h (z_j - z_i)) + sum_(i=1)^N q_i^2 = 2 sum_(i=1)^N q_i e^(h z_i) underbrace(sum_(j=i + 1)^N q_j e^(-h z_j), #text[$A(i)$]) + sum_(i=1)^N q_i^2 \
+$
+where $A(i)$ can be computed as follows:
+$
+  A(i) = A(i + 1) + q_(i + 1) e^(-h z_(i + 1)), A(N) = 0
+$
+Thus it only takes $N$ steps to compute $A(i)$, and another $N$ steps to compute $S$ with $A$.
+
+#pagebreak()
+
+=== SOEwald2D
+
+Summing up all Fourier modes directly, the complexity is *$O(N^(1.4))$*.
+
 #figure(
-  image("figs/soe_runtime.png", width: 300pt),
-  caption: [#text(15pt)[Runtime of SOEwald2D method.]],
+  image("figs/soe_accuracy_energy.png", width: 600pt),
+  caption: [#text(15pt)[Accuracy of SOEwald2D method for the energy.]],
+)
+
+#pagebreak()
+
+#figure(
+  image("figs/soe_accuracy_force.png", width: 700pt),
+  caption: [#text(15pt)[Accuracy of SOEwald2D method for the force.]],
+)
+
+#pagebreak()
+
+=== SOEwald2D + RBE = RBSE2D
+
+Recall the energy expression:
+$
+  U_l^h & = sum_(h) e^(-h^2 / (4 alpha^2)) underbrace((sqrt(pi) alpha) /  (L_x L_y) sum_(i, j) q_i q_j e^(i h rho_(i j)) / h sum_(l=1)^M w_l (e^(- s_l alpha z) / (alpha s_l + h) - e^(- s_l alpha z) / (alpha s_l - h) + (2 alpha s_l e^(-h z)) / ((alpha s_l)^2 - h^2)), "Linear complexity") \ 
+  & = sum_h e^(-h^2 / (4 alpha^2)) f(h)
+$
+Use importance sampling instead of direct sum:
+$
+  sum_h e^(-h^2 / (4 alpha^2)) f(h) approx (sum_h e^(-h^2 / (4 alpha^2)))/P sum_(h in cal(K)_P) f(h)
+$
+where $cal(K)_P$ is the set of $P$ Fourier modes sampled from $cal(P)(h) ~ e^(-h^2 / (4 alpha^2))$, where $P$ is a $O(1)$ constant.
+
+The resulting stochastic method is called RBSE2D method, with *$O(N)$* complexity.
+
+#pagebreak()
+
+=== Numerical results
+
+#figure(
+  image("figs/soe_md.png", width: 500pt),
+  caption: [#text(15pt)[Results of coarse-grained MD simulation of 1 : 1 electrolytes in the NVT ensemble with RBSE2D method.]],
+)
+
+#pagebreak()
+
+#figure(
+  image("figs/soe_runtime.png", width: 450pt),
+  caption: [#text(15pt)[Time cost of SOEwald2D and RBSE2D methods for different system sizes.]],
 )
 
 == Random batch Ewald2D method
@@ -362,11 +573,7 @@ qem
 
 == Short summary
 
-In summary, we developed a series of methods for simulating quasi-2D charged systems, including:
-
-- Sum-of-Exponential Ewald2D method for non-dielectrically confined systems.
-- Random batch Ewald2D method for dielectrically confined systems.
-- Quasi-Ewald method for negatively confined systems.
+In summary, we developed a series of methods for simulating quasi-2D charged systems.
 
 === Advantages
 
@@ -400,15 +607,15 @@ We further applied our method to the simulations of SPC/E water confined by slab
   caption: [#text(15pt)[All-atom simulations of SPC/E water dielectrically confined by slabs.]],
 )
 
-#pagebreak()
+// #pagebreak()
 
-#figure(
-  grid(rows:2, gutter: 15pt, 
-    image("figs/spce_time.png", width: 650pt),
-    image("figs/spce_time_dielectric.png", width: 650pt),
-  ), 
-  caption: [#text(15pt)[Time cost of all-atom simulations of SPC/E water in homogeneous media and confined by slabs with different dielectric constants.]],
-)
+// #figure(
+//   grid(rows:2, gutter: 15pt, 
+//     image("figs/spce_time.png", width: 650pt),
+//     image("figs/spce_time_dielectric.png", width: 650pt),
+//   ), 
+//   caption: [#text(15pt)[Time cost of all-atom simulations of SPC/E water in homogeneous media (upper) and confined by slabs with different dielectric constants (lower).]],
+// )
 
 == Broken symmetries via dielectric confinements
 
@@ -538,13 +745,13 @@ Also thank Jiuyang Liang (SJTU & FI), Qi Zhou (SJTU) and Yijia Wang (ITP, CAS) f
 
 #show: appendix
 
-= Appendix <touying:unoutlined>
+// = Appendix <touying:unoutlined>
 
-== Supplementary results
+// == Supplementary results
 
-This is a result.
+// This is a result.
 
-#pagebreak()
+// #pagebreak()
 
 == References
 
