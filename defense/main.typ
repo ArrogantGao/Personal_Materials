@@ -295,9 +295,9 @@ $
 
 Assume that $epsilon_u, epsilon_d, epsilon_c$ are all positive, then $gamma_u, gamma_d in (-1, 1)$, and we get the so-called *image charge series* for the polarization potential:
 $
-  G(r, r') = 1 / (4 pi epsilon_c) [1 / abs(r - r') + sum_(l=1)^infinity (gamma_u^(l) / abs(r - r_+^(l) ') + gamma_d^(l) / abs(r - r_-^(l) '))]
+  G(r, r') = 1 / (4 pi epsilon_c) [1 / abs(r - r') + sum_(l=1)^infinity (gamma_+^(l) / abs(r - r_+^(l) ') + gamma_-^(l) / abs(r - r_-^(l) '))]
 $
-where $r_(+)^(l) = (x, y, z_(+)^(l))$ and $r_(-)^(l) = (x, y, z_(-)^(l))$ are the positions of the $l$-th level image charges, and 
+where $gamma_+^(l) = gamma_d^(ceil(l/2)) gamma_u^(floor(l/2))$ and $gamma_-^(l) = gamma_d^(floor(l/2)) gamma_u^(ceil(l/2))$, and $r_(+)^(l) = (x, y, z_(+)^(l))$ and $r_(-)^(l) = (x, y, z_(-)^(l))$ are the positions of the $l$-th level image charges, and 
 $
   z_+^(l) = (-1)^l z + 2 ceil(l/2) H,
   z_-^(l) = (-1)^l z - 2 floor(l/2) H.
@@ -565,7 +565,75 @@ The resulting stochastic method is called RBSE2D method, with *$O(N)$* complexit
 
 == Random batch Ewald2D method
 
-rbe2d
+=== Basic idea
+
+Recall that in EwaldELC, long-range energy of the Q2D system is approximated by that of a padded 3D system.
+$
+  U_("Q2D") approx underbrace((2 pi) / (L_x L_y L_z) sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 (sum_(i = 1)^N q_i e^(i k r_i))^2 - alpha / sqrt(pi) sum_(i=1)^N q_i^2, #text[$U_("3D")$]) + U_("YB")
+$
+A direct forward idea is to calculate $U_("3D")$ via RBE, resulting in an $O(N)$ algorithm.
+
+#pagebreak()
+Surprisingly, RBE is not sensitive to the aspect ratio of the system.
+
+#figure(
+  image("figs/rbe2d_accuracy.png", width: 600pt),
+  caption: [#text(15pt)[Accuracy of RBE2D method for different aspect ratios.]],
+)
+
+#pagebreak()
+
+=== RBE2D for dielectrically confined systems
+
+Similar to the EwaldELC method, RBE2D can be applied to the dielectrically confined systems by combining with the image charge method:
+$
+  U_("3D")^M = (2 pi) / (L_x L_y L_z) sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 rho_k overline(rho)_k^M - alpha / sqrt(pi) sum_(i=1)^N q_i^2
+$
+where
+$
+  rho_k = sum_(i = 1)^N q_i e^( - i k r_i) \ overline(rho)_k^M = sum_(j = 1)^N q_j (e^(i k r_j) + sum_(l = 1)^M (gamma_+^l e^(i k r_(j +)^l) + gamma_-^l e^(i k r_(j -)^l)))
+$
+
+However, cost of evaluating $overline(rho)_k^M$ is $O(M N)$, which is too expensive.
+
+#pagebreak()
+
+=== From $O(M N)$ to $O(M + N)$
+
+Recall the location of image charges:
+$
+  r_(+)^(l) = (x, y, (-1)^l z + 2 ceil(l/2) H) " and " r_(-)^(l) = (x, y, (-1)^l z - 2 floor(l/2) H)
+$
+Notice that
+$
+  overline(rho)_k^M = sum_(j = 1)^N q_j e^(i k r_j) (1 + e^(-2 i k z_j) Y_("odd")(k_z) + Y_("even")(k_z)) \
+  Y_("odd")(k_z) = sum_(l = 1, "odd")^M (gamma_+^l e^(i k_z (l + 1) H) + gamma_-^l e^( - i k_z (l - 1) H)) \
+  Y_("even")(k_z) = sum_(l = 1, "even")^M (gamma_+^l e^(i k_z l H) + gamma_-^l e^( - i k_z (l - 1) H))
+$
+Then for each Fourier mode $k$, one can compute $Y_("odd")(k_z)$ and $Y_("even")(k_z)$ in $O(M)$ time, and then $overline(rho)_k^M$ in $O(N)$ time. The overall complexity is $O(M + N)$.
+
+
+#pagebreak()
+
+#align(center,
+  image("figs/rbe2d_table.png", height: 110pt),
+)
+
+#figure(
+  image("figs/rbe2d_dielectric.png", width: 500pt),
+  caption: [#text(15pt)[Accuracy of RBE2D method for dielectrically confined electrolytes, $P = 100$.]],
+)
+
+#pagebreak()
+
+=== CPU performance
+
+The SPC/E bulk water systems are simulated, where the system dimensions are set as $L_x = L_y = H$, and the system size changes as one varies $N$ with the density of water being fixed at $1 "g/cm"^3$.
+
+#figure(
+  image("figs/rbe2d_runtime.png", width: 700pt),
+  caption: [#text(15pt)[CPU performance of RBE2D method, compared with PPPM. (Left) number of CPU cores is fixed as 64, (Right) number of atoms is fixed as 139968, inset shows the strong parallel efficiency.]],
+)
 
 == Quasi-Ewald method
 
@@ -577,7 +645,7 @@ In summary, we developed a series of methods for simulating quasi-2D charged sys
 
 === Advantages
 
-- Mesh free, only use simply data structure.
+- Mesh free, only use simple data structure.
 - Not sensitive to the aspect ratio of the system.
 - Parallelizable and scalable.
 
@@ -606,16 +674,6 @@ We further applied our method to the simulations of SPC/E water confined by slab
   image("figs/spce_dielectric.png", width: 500pt),
   caption: [#text(15pt)[All-atom simulations of SPC/E water dielectrically confined by slabs.]],
 )
-
-// #pagebreak()
-
-// #figure(
-//   grid(rows:2, gutter: 15pt, 
-//     image("figs/spce_time.png", width: 650pt),
-//     image("figs/spce_time_dielectric.png", width: 650pt),
-//   ), 
-//   caption: [#text(15pt)[Time cost of all-atom simulations of SPC/E water in homogeneous media (upper) and confined by slabs with different dielectric constants (lower).]],
-// )
 
 == Broken symmetries via dielectric confinements
 
