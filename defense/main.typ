@@ -729,7 +729,7 @@ To simplify the computation, we introduce the quasi-Ewald splitting:
 $
   delta(bold(r)) = underbrace(delta(bold(r)) - e^(-alpha^2 bold(rho)^2) delta(z), #text[$sigma_s$]) + underbrace(e^(-alpha^2 bold(rho)^2) delta(z), #text[$sigma_l$])
 $
-so that the integral in $z$ removed.
+so that the integral is simplified.
 
 #figure(
   image("figs/qem_splitting.png", width: 500pt),
@@ -738,22 +738,33 @@ so that the integral in $z$ removed.
 
 #pagebreak()
 
+The accuracy of the quasi-Ewald method is compared with that of the ICM-Ewald2D method.
 
-
-
-
-
-
+#figure(
+  image("figs/qem_accuracy.png", width: 450pt),
+  caption: [#text(15pt)[Accuracy of the quasi-Ewald method for different $gamma_u = gamma_d = gamma$, box size is fixed to $(100, 100, 50)$, $N = 100$, $E$ is the parameter for accuracy.]],
+)
 
 #pagebreak()
 
+Further combined with random batch sampling, we obtain a method with $O(N)$ complexity.
 
-
+#figure(
+  grid(columns: 2, gutter: 10pt,
+    image("figs/qem_md.png", width: 400pt),
+    image("figs/qem_time.png", width: 330pt),
+  ),
+  caption: [#text(15pt)[(Left) Distributions of ion density in $z$ for symmetric electrolytes containing 218 cations and 218 anions. (Right) time cost of QEM method for different system sizes.]],
+)
 
 
 == Short summary
 
-In summary, we developed a series of methods for simulating quasi-2D charged systems.
+In summary, we developed a series of methods for simulating quasi-2D charged systems, including:
+
+- SOEwald2D method for non-dielectrically confined systems.
+- RBE2D method for dielectrically confined systems.
+- QEM method for negatively confined systems.
 
 === Advantages
 
