@@ -57,7 +57,7 @@
     title: [Confined Quasi-2D Coulomb Systems: Theory, Algorithms, and Applications],
     // subtitle: [],
     author: text(23pt)[Xuanzhao Gao \ Supervisor: Prof. Zecheng Gan \ Co-supervisor: Prof. Jinguo Liu, Prof. Yang Xiang],
-    institution: text(20pt)[Hong Kong University of Science and Technology (Guangzhou)],
+    institution: text(20pt)[Advanced Materias Thrust, Function Hub \ Hong Kong University of Science and Technology (Guangzhou)],
     date: text(23pt)[2025-05-27],
   ),
 
@@ -637,7 +637,119 @@ The SPC/E bulk water systems are simulated, where the system dimensions are set 
 
 == Quasi-Ewald method
 
-qem
+=== Negatively confined systems
+
+In previous works, we assume that $abs(gamma) <= 1$, which requires all dielectric constants are positive.
+In recent years, metamaterials characterized by negative dielectric constants have been widely studied @cheng2017tunable @xu2020polyaniline @xie2022recent.
+
+Assume a system with $epsilon_c >0$, but confined by a dielectric medium with $epsilon_u, epsilon_d < 0$, then the system is *negatively confined*, with $abs(gamma) > 1$.
+
+Recall that the image charge of the $l$-th level:
+$
+  q_+^l = q gamma_d^(ceil(l/2)) gamma_u^(floor(l/2)) ", and " 
+  q_-^l = q gamma_d^(floor(l/2)) gamma_u^(ceil(l/2)) 
+$
+the image charge series is divergent, resulting in *failure of the image charge method*.
+
+#pagebreak()
+
+=== Green's function in Fourier space
+
+Another way is to solve the Poisson equation in Fourier space.
+
+Applying Fourier transform to the Poisson equation in $x$ and $y$ directions, then
+$
+  gradient^2 G(r, r') = delta(r - r') arrow integral_(bb(R)^2) gradient^2 G(r, r') e^( - i h rho) d rho = integral_(bb(R)^2) delta(r - r') e^( - i h rho) d rho
+$
+is transformed to
+$
+  partial_z^2 hat(G)(h, z, r') - h^2 hat(G)(h, z, r') = e^(-i h rho') delta(z - z') \
+  G(r, r') = 1 / (4 pi^2) integral_(bb(R)^2) hat(G)(h, z, r') e^(i h rho) d h
+$
+
+Solution to the above equation is
+$
+  hat(G)(h, z, r') = e^(-i h rho') (e^(-h |z - z'|) + gamma_d e^(-h (z + z')) + gamma_u e^(-h (2H - z - z')) + gamma_d gamma_u e^(-h (2H - |z - z'|))) / (2h(1 - gamma_u gamma_d e^(-2 h H)))
+$
+Notice that when $h_c = ln(gamma_u gamma_d) / (2H)$, $hat(G)$ diverges.
+
+#pagebreak()
+
+=== Singular substraction
+
+With $hat(G)$, we have
+$
+  G(r, r') = & 1 / (4 pi^2) integral_(bb(R)^2) hat(G)(h, z, r') e^(i h rho) d h \
+  = & integral_(bb(R)^2) (f(h, z, z')) / (8 pi^2 h(1 - gamma_u gamma_d e^(-2 h H))) e^(i h (rho - rho')) d h = 1 / (4 pi) integral_(bb(R)) (f(h, z, z') J_0(h Delta rho)) / (1 - gamma_u gamma_d e^(-2 h H)) d h,
+$
+which is a singular integral diverging at $h = h_c$, and
+$
+  f(h, z, z') = e^(-h |z - z'|) + gamma_d e^(-h (z + z')) + gamma_u e^(-h (2H - z - z')) + gamma_d gamma_u e^(-h (2H - |z - z'|)).
+$
+
+Notice that
+$
+  lim_(d h arrow 0) 1 / (1 - gamma_u gamma_d e^(-2 (h_c + d h) H)) = lim_(d h arrow 0) 1 / (1 - e^(2 H d h)) = 1 / (2 H d h)
+$
+thus $h_c$ is a 1st order pole.
+
+#pagebreak()
+
+Split the integral into two parts:
+$
+  I_1 = 1 / (4 pi) integral_(bb(R)) ((f(h, z, z') J_0(h Delta rho) - f(h_c, z, z') J_0(h_c Delta rho)) / (1 - e^(-2 H (h - h_c))) + f(h_c, z, z') J_0(h_c Delta rho)) d h \
+  I_2 = (f(h_c, z, z') J_0(h_c Delta rho)) / (4 pi) integral_(bb(R)) (e^(-2 H (h - h_c))) / (1 - e^(-2 H (h - h_c))) d h =  (f(h_c, z, z') J_0(h_c Delta rho)) / (8 pi H) ln(gamma_u gamma_d - 1)
+$
+
+#figure(
+  image("figs/singular_integral.png", width: 350pt),
+  caption: [#text(15pt)[Integrand of $I_1$ and $I_2$ as function of $h$, with $h_c = 1$.]],
+)
+
+#pagebreak()
+
+With the above two integrals, we can compute the force between two charges in the system confined by dielectric slabs with different $gamma_u = gamma_d = gamma$.
+When $abs(gamma) < 1$, the results are compared against that of the ICM.
+
+#figure(
+  image("figs/qem_force.png", width: 700pt),
+  caption: [#text(15pt)[(a) Force between two charges in systems confined by dielectric slabs with different $gamma_u = gamma_d = gamma$, (b) the corresponding field lines.]],
+)
+
+#pagebreak()
+
+=== Quasi-Ewald splitting
+
+Spliting short-range and long-range contributions is needed for simulation:
+$
+  delta(bold(r)) = sigma_s (bold(r)) + sigma_l (bold(r)) \ 
+  G (bold(r), bold(r)') = 1 / (4 pi^2) integral.triple e^(i bold(h) dot bold(rho)) hat(G)(bold(h), z, z'') hat(sigma) (bold(h), z'' - z') d bold(h) d z'' 
+$
+To simplify the computation, we introduce the quasi-Ewald splitting:
+$
+  delta(bold(r)) = underbrace(delta(bold(r)) - e^(-alpha^2 bold(rho)^2) delta(z), #text[$sigma_s$]) + underbrace(e^(-alpha^2 bold(rho)^2) delta(z), #text[$sigma_l$])
+$
+so that the integral in $z$ removed.
+
+#figure(
+  image("figs/qem_splitting.png", width: 500pt),
+  caption: [#text(15pt)[Illustration of the quasi-Ewald splitting.]],
+)
+
+#pagebreak()
+
+
+
+
+
+
+
+
+#pagebreak()
+
+
+
+
 
 == Short summary
 
@@ -662,16 +774,16 @@ In summary, we developed a series of methods for simulating quasi-2D charged sys
 Our method is applied to the all-atom simulations of SPC/E water confined by slabs, where $L_x = L_y = H = 55.9 angstrom$ and consists of 17496 atoms.
 
 #figure(
-  image("figs/spce.png", width: 500pt),
+  image("figs/spce.png", width: 550pt),
   caption: [#text(15pt)[All-atom simulations of SPC/E water confined by slabs.]],
 )
 
 #pagebreak()
 
-We further applied our method to the simulations of SPC/E water confined by slabs with different dielectric constants, where $gamma_u = gamma_d = -0.5$, the system consists of 53367 atoms.
+We applied our method to the simulations of SPC/E water confined by slabs with different dielectric constants, where $gamma_u = gamma_d = -0.5$, the system consists of 53367 atoms.
 
 #figure(
-  image("figs/spce_dielectric.png", width: 500pt),
+  image("figs/spce_dielectric.png", width: 550pt),
   caption: [#text(15pt)[All-atom simulations of SPC/E water dielectrically confined by slabs.]],
 )
 
