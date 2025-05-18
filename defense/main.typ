@@ -35,7 +35,7 @@
 #let globalvars = state("t", 0)
 #let timecounter(minutes) = [
   #globalvars.update(t => t + minutes)
-  // #place(top + right,text(16pt, red)[#context globalvars.get()min])
+  #place(top + right,text(16pt, red)[#context globalvars.get()min])
 ]
 #let clip(image, top: 0pt, bottom: 0pt, left: 0pt, right: 0pt) = {
   box(clip: true, image, inset: (top: -top, right: -right, left: -left, bottom: -bottom))
@@ -78,6 +78,7 @@
 #pagebreak()
 
 == Self-introduction
+#timecounter(1)
 
 === Education background
 
@@ -97,8 +98,9 @@
 = Background
 
 == Molecular dynamics simulation
+#timecounter(2)
 
-Molecular dynamics simulation is a widely used method to study the motion of atoms and molecules, which plays a key role in many fields, including materials science, biophysics, and drug design.
+Molecular dynamics simulation is a widely used method based on theoretical modeling and computer simulation, which plays a key role in many fields, including materials science, biophysics, and drug design.
 
 #figure(
   grid(columns: 3, 
@@ -110,21 +112,21 @@ Molecular dynamics simulation is a widely used method to study the motion of ato
 )
 
 
-== Quasi-2D charged systems
+== Quasi-2D systems
 
 #timecounter(1)
 
 Quasi-2D systems @mazars2011long are at the macroscopic scale in $x y$, but microscopic in $z$, so that are always modeled as doubly periodic in numerical simulations.
-// Q2D systems are widely exist in nature and engineering, for example, cell membranes and electrolyte near surfaces.
+Q2D systems are widely exist in nature and engineering, for example, cell membranes and electrolyte near surfaces.
 
 #figure(
   image("figs/Q2D.png", width: 400pt),
   caption: [#text(15pt)[Illustration of a quasi-2D charged system.]],
 )
 
-Coulomb interaction plays a key role in nature, leading to effect such as ion transportation and self-assembly. 
+// Coulomb interaction plays a key role in nature, leading to effect such as ion transportation and self-assembly. 
 
-However, the Coulomb interaction decays as $r^(-1)$ in 3D, so that it is long ranged and singular at $r=0$, which make such simulation computationally expensive.
+// However, the Coulomb interaction decays as $r^(-1)$ in 3D, so that it is long ranged and singular at $r=0$, which make such simulation computationally expensive.
 
 
 == Coulomb interaction
@@ -139,9 +141,11 @@ Coulomb interaction plays a key role in nature, leading to effect such as ion tr
 )
 
 However, the Coulomb interaction decays as $r^(-1)$ in 3D, so that is long ranged and singular at $r=0$, which make such simulation computationally expensive.
-Complexity of a direct sum of the Coulomb interaction in doubly periodic systems is about $O(N^2 epsilon^(-1/3))$.
+Complexity of a direct sum of the Coulomb interaction in doubly periodic systems is about *$O(N^2 epsilon^(-1/3))$*.
 
 == Dielectric confinements
+
+#timecounter(1)
 
 Polarizable surfaces also play a key role in nature, which arise naturally due to dielectric mismatch between different materials, leading to ion transport in nanochannels, pattern formation and self-assembly of colloidal and polymer monolayers.
 
