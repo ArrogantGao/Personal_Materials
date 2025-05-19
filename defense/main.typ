@@ -112,12 +112,13 @@ Molecular dynamics simulation is a widely used method based on theoretical model
 )
 
 
-== Quasi-2D systems
+== Quasi-2D charged systems
 
 #timecounter(1)
 
-Quasi-2D systems @mazars2011long are at the macroscopic scale in $x y$, but microscopic in $z$, so that are always modeled as doubly periodic in numerical simulations.
-Q2D systems are widely exist in nature and engineering, for example, cell membranes and electrolyte near surfaces.
+Quasi-2D systems @mazars2011long are at the macroscopic scale in $x y$, but microscopic in $z$, which are widely exist in nature and engineering, for example, cell membranes and electrolyte near surfaces.
+
+Quasi-2D systems are always modeled as doubly periodic in numerical simulations.
 
 #figure(
   image("figs/Q2D.png", width: 400pt),
@@ -147,7 +148,7 @@ Complexity of a direct sum of the Coulomb interaction in doubly periodic systems
 
 #timecounter(1)
 
-Polarizable surfaces also play a key role in nature, which arise naturally due to dielectric mismatch between different materials, leading to ion transport in nanochannels, pattern formation and self-assembly of colloidal and polymer monolayers.
+Polarizable surfaces arise naturally due to dielectric mismatch between different materials, leading to ion transport in nanochannels, pattern formation and self-assembly of colloidal and polymer monolayers.
 
 #figure(
   image("figs/pattern.png", width: 400pt),
@@ -163,7 +164,7 @@ Polarizable surfaces also play a key role in nature, which arise naturally due t
 
 Methods have been developed to accelerate the Coulomb interaction in Q2D systems.
 
-The very first method is the Ewald2D @parry1975electrostatic method based on the Ewald splitting of the Coulomb kernel. It is accurate but with $O(N^2)$ complexity.
+The very first method is the Ewald2D @parry1975electrostatic method based on the Ewald splitting of the Coulomb kernel. It is accurate but with $O(N^2 log(epsilon))$ complexity.
 
 To reduce the complexity, most methods rely on the following three strategies:
 
@@ -201,9 +202,14 @@ Another challenge is the polarization effect, various strategies have been devel
 - Numerically solving the Poisson equation with interface conditions @nguyen2019incorporating @maxian2021fast @ma2021modified.
 These methods are also accelerated by FFT or FMM to reach a complexity of $O(N log N)$ or $O(N)$.
 However, the computational cost significantly increases compared to the homogeneous case, especially for strongly confined systems.
-Rugious error analysis and parameter selection are also in lack.
+
+Rigorous error analysis and parameter selection are also lacking.
+
+= Theoretical Analysis
 
 == Ewald summations revisited
+
+#timecounter(1)
 
 Key point: handle short-range and long-range contributions separately.
 
@@ -223,13 +229,14 @@ $
   U_s = 1 / 2 sum_(i,j=1)^N sum_(bold(m)) q_i q_j "erfc"(alpha |r_i - r_j + L_bold(m)|) / abs(r_i - r_j + L_bold(m))
 $
 $
-  U_l = pi / (2 L_x L_y) sum_(i,j=1)^N q_i q_j sum_(bold(h) != bold(0)) e^(i bold(h) dot (r_i - r_j)) / h G_alpha (bold(h), z_i - z_j) - alpha / sqrt(pi) sum_(i=1)^N q_i^2 + J_0
+  U_l = pi / (2 L_x L_y) sum_(i,j=1)^N q_i q_j sum_(bold(h) != bold(0)) e^(i bold(h) dot (r_i - r_j)) / h cal(G)_alpha (bold(h), z_i - z_j) - alpha / sqrt(pi) sum_(i=1)^N q_i^2 + cal(J)_0
 $
 where $bold(h) = ((2 pi m_x) / L_x, (2 pi m_y) / L_y)$ is the reciprocal lattice vector, and
 $
-  J_0 = -pi / (L_x L_y) sum_(i,j=1)^N q_i q_j ("erf"(alpha |z_i - z_j|) + alpha / sqrt(pi) e^(- alpha^2 (z_i - z_j)^2)) \
-  G_alpha (bold(h), z) = xi^+ (bold(h), z) + xi^- (bold(h), z) = e^(-h z) "erfc"(h / (2 alpha) + alpha z) + e^(h z) "erfc"(h / (2 alpha) - alpha z)
+  cal(J)_0 = -pi / (L_x L_y) sum_(i,j=1)^N q_i q_j ("erf"(alpha z) + alpha / sqrt(pi) e^(- alpha^2 z^2)) \
+  cal(G)_alpha (bold(h), z) = xi^+ (bold(h), z) + xi^- (bold(h), z) = e^(-h z) "erfc"(h / (2 alpha) + alpha z) + e^(h z) "erfc"(h / (2 alpha) - alpha z)
 $
+where $z = |z_i - z_j|$.
 
 The resulting method is the so-called Ewald2D method with *$O(N^2 log(epsilon))$* complexity.
 
@@ -310,8 +317,6 @@ $
 #align(center,
   image("figs/icm_system.png", width: 500pt)
 )
-
-= Theoretical Analysis
 
 == Error estimation
 
