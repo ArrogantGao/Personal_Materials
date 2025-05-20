@@ -35,7 +35,7 @@
 #let globalvars = state("t", 0)
 #let timecounter(minutes) = [
   #globalvars.update(t => t + minutes)
-  #place(top + right,text(16pt, red)[#context globalvars.get()min])
+  #place(bottom + right,text(16pt, red)[#context globalvars.get()min])
 ]
 #let clip(image, top: 0pt, bottom: 0pt, left: 0pt, right: 0pt) = {
   box(clip: true, image, inset: (top: -top, right: -right, left: -left, bottom: -bottom))
@@ -112,58 +112,65 @@ Molecular dynamics simulation is a widely used method based on theoretical model
 )
 
 
-== Quasi-2D charged systems
+== Confined quasi-2D Coulomb systems
 
-#timecounter(1)
+#timecounter(2)
 
 Quasi-2D systems @mazars2011long are at the macroscopic scale in $x y$, but microscopic in $z$, which are widely exist in nature and engineering, for example, cell membranes and electrolyte near surfaces.
 
-Quasi-2D systems are always modeled as doubly periodic in numerical simulations.
+Quasi-2D systems are always modeled to be doubly periodic in numerical simulations.
 
 #figure(
   image("figs/Q2D.png", width: 400pt),
   caption: [#text(15pt)[Illustration of a quasi-2D charged system.]],
 )
 
-// Coulomb interaction plays a key role in nature, leading to effect such as ion transportation and self-assembly. 
+We consider Q2D systems with charged particles, which are modeled as point charges.
+These charges interact with each other via Coulomb interaction, which plays a key role in nature, leading to effect such as self-assembly. 
 
 // However, the Coulomb interaction decays as $r^(-1)$ in 3D, so that it is long ranged and singular at $r=0$, which make such simulation computationally expensive.
 
 
-== Coulomb interaction
+// // == Coulomb interaction
+// #pagebreak()
+
+// #timecounter(1)
+
+// Coulomb interaction plays a key role in nature, leading to effect such as ion transportation and self-assembly.
+
+// #figure(
+//   image("figs/self-assembly.png", width: 450pt),
+//   caption: [#text(15pt)[Self-assembly of nanoparticles via Coulomb interaction @luijten2014.]],
+// )
+
+
+// == Dielectric confinements
+#pagebreak()
 
 #timecounter(1)
 
-Coulomb interaction plays a key role in nature, leading to effect such as ion transportation and self-assembly.
+Confinements means the particles are confined by substrates below and above.
 
-#figure(
-  image("figs/self-assembly.png", width: 450pt),
-  caption: [#text(15pt)[Self-assembly of nanoparticles via Coulomb interaction @luijten2014.]],
+Polarization arises naturally due to dielectric mismatch between different materials, leading to effects such as modulation of ion transport @antila2018dielectric, and pattern formation @wang2019dielectric.
+
+#leftright(
+  figure(
+    image("figs/ion_transport.png", width: 350pt),
+    caption: [#text(15pt)[Dielectric modulation of ion transport near interfaces @antila2018dielectric.]],
+  ),
+  figure(
+    image("figs/pattern.png", width: 350pt),
+    caption: [#text(15pt)[Pattern formation in 2D dipolar systems due to dielectric mismatch @wang2019dielectric.]],
+  ),
 )
-
-However, the Coulomb interaction decays as $r^(-1)$ in 3D, so that is long ranged and singular at $r=0$, which make such simulation computationally expensive.
-Complexity of a direct sum of the Coulomb interaction in doubly periodic systems is about *$O(N^2 epsilon^(-1/3))$*.
-
-== Dielectric confinements
-
-#timecounter(1)
-
-Polarizable surfaces arise naturally due to dielectric mismatch between different materials, leading to ion transport in nanochannels, pattern formation and self-assembly of colloidal and polymer monolayers.
-
-#figure(
-  image("figs/pattern.png", width: 400pt),
-  caption: [#text(15pt)[Pattern formation in 2D dipolar systems due to dielectric mismatch @wang2019dielectric.]],
-)
-
-
-
-
 
 == Algorithms for Q2D charged systems
 #timecounter(1)
 
-Methods have been developed to accelerate the Coulomb interaction in Q2D systems.
+Coulomb interaction decays as $r^(-1)$ in 3D and is singular at $r=0$, which make such simulation computationally expensive.
+Complexity of a direct sum of the Coulomb interaction in doubly periodic systems is about *$O(N^2 epsilon^(-1/3))$*.
 
+Methods have been developed to accelerate the calculation of Coulomb interaction in Q2D systems.
 The very first method is the Ewald2D @parry1975electrostatic method based on the Ewald splitting of the Coulomb kernel. It is accurate but with $O(N^2 log(epsilon))$ complexity.
 
 To reduce the complexity, most methods rely on the following three strategies:
@@ -203,7 +210,7 @@ Another challenge is the polarization effect, various strategies have been devel
 These methods are also accelerated by FFT or FMM to reach a complexity of $O(N log N)$ or $O(N)$.
 However, the computational cost significantly increases compared to the homogeneous case, especially for strongly confined systems.
 
-Rigorous error analysis and parameter selection are also lacking.
+// Rigorous error analysis and parameter selection are also lacking.
 
 = Theoretical Analysis
 
@@ -221,7 +228,11 @@ $
   image("figs/erf.png", width: 400pt),
 )
 
+These kernels decay rapidly in real space and Fourier space, respectively.
+
 #pagebreak()
+
+#timecounter(1)
 
 The short-range part is summed in the real space, and the long-range part is summed in the Fourier space.
 The total interaction energy can be computed as follows:
@@ -237,10 +248,13 @@ $
   cal(G)_alpha (bold(h), z) = xi^+ (bold(h), z) + xi^- (bold(h), z) = e^(-h z) "erfc"(h / (2 alpha) + alpha z) + e^(h z) "erfc"(h / (2 alpha) - alpha z)
 $
 where $z = |z_i - z_j|$.
+The summaitons can be truncated as $r_c = s / alpha$, and $k_c = 2 s alpha$.
 
-The resulting method is the so-called Ewald2D method with *$O(N^2 log(epsilon))$* complexity.
+The resulting method is the so-called Ewald2D method, have a complexity of $O(N^2)$ due to the *unseparable double summation*.
 
-== Ewald summations revisited
+#pagebreak()
+
+#timecounter(2)
 
 One way to accelerate the summation is transforming the system as triply periodic one by adding vacuum layer in the $z$ direction.
 
@@ -250,30 +264,15 @@ One way to accelerate the summation is transforming the system as triply periodi
 
 The summation is reformulated as:
 $
-  U_l = underbrace((2 pi) / (L_x L_y L_z) sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 (sum_(i = 1)^N q_i e^(i k r_i))^2 - alpha / sqrt(pi) sum_(i=1)^N q_i^2, "Ewald3D summation") + underbrace(U_("YB") + U_("ELC") , "correction terms") + U_("Trap")
+  U_l = underbrace((2 pi) / (L_x L_y L_z) sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 (sum_(i = 1)^N q_i e^(i k r_i))^2 - alpha / sqrt(pi) sum_(i=1)^N q_i^2, "Ewald3D summation") + underbrace(U_("YB") , #text[$O(N)$]) + underbrace(U_("ELC"), #text[$O(N^2)$]) + underbrace(U_("Trap") , "Error")
 $
 where $k = 2 pi (m_x / L_x, m_y / L_y, m_z / L_z)$ is the reciprocal lattice vector.
 Complexity of EwaldELC method is *$O(N^(1.5))$*, and can easily be accelerated by FFT or FMM to reach linear complexity.
 
-== Random batch Ewald revisited
-
-Random batch Ewald method @Jin2020SISC is a stochastic method proposed to accelerate the Ewald3D summation.
-The main idea is to sample the long-range part in the Fourier space using importance sampling instead of summing over all the Fourier modes.
-$
-  sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 (sum_(i = 1)^N q_i e^(i k r_i))^2 approx (sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2))) / P sum_(k in cal(K)_P) 1 / k^2 (sum_(i = 1)^N q_i e^(i k r_i))^2,
-$
-where $cal(K)_P$ is the set of $P$ Fourier modes sampled from the distribution $cal(P) (k) ~ e^(- k^2 / (4 alpha^2))$.
-$P$ is proven to be an $O(1)$ constant so that the total complexity is $O(N)$.
-
-#figure(
-  grid(columns:2, gutter: 25pt, 
-    image("figs/rbe_accuracy.png", height: 220pt),
-    image("figs/rbe_scale.png", height: 220pt),
-  ),
-  caption: [#text(15pt)[Accuracy and scalability of random batch Ewald method @liang2022superscalability.]],
-)
 
 == Image charge method revisited
+
+#timecounter(1)
 
 In dielectrically confined Q2D systems, dielectric permittivity is a function of $z$:
 
@@ -296,13 +295,23 @@ $
   )
 $
 
-Define the dielectric reflection rate, $gamma_u$ and $gamma_d$:
-$
-  gamma_u = (epsilon_c - epsilon_u) / (epsilon_c + epsilon_u), " and "
-  gamma_d = (epsilon_c - epsilon_d) / (epsilon_c + epsilon_d),
-$
+#leftright(
+  text[
+    Define the dielectric reflection rate:
+    $
+      gamma_u = (epsilon_c - epsilon_u) / (epsilon_c + epsilon_u), " and "
+      gamma_d = (epsilon_c - epsilon_d) / (epsilon_c + epsilon_d),
+    $
+  ],
+  align(center,
+    image("figs/gamma.png", width:130pt),
+  ),
+)
+
 
 #pagebreak()
+
+#timecounter(1)
 
 Assume that $epsilon_u, epsilon_d, epsilon_c$ are all positive, then $gamma_u, gamma_d in (-1, 1)$, and we get the so-called *image charge series* for the polarization potential:
 $
@@ -315,25 +324,37 @@ $
 $
 
 #align(center,
-  image("figs/icm_system.png", width: 500pt)
+  image("figs/icm_system.png", width: 400pt)
 )
 
-== Error estimation
+Then the original inhomogenous system with $N$ particles is transformed into a homogenous system with $(2M + 1) N$ particles.
 
-When combined with image charge method, the error of EwaldELC method is quite complex.
+== ICM-EwaldELC method
+
+#timecounter(1)
+
+A combination of image charge method and EwaldELC method is called ICM-EwaldELC method, which is a standard technique for dielectrically confined systems.
+Main parameters are:
+- *$L_z$*: thickness of the vacuum layer.
+- *$M$*: number of layers of image charges.
+
+We noticed that the total error is quite complex for the ICM-EwaldELC method:
 
 #figure(
   image("figs/error_yuan.png", width: 500pt),
   caption: [#text(15pt)[Relative precision in the electrostatic energy computed by ICM-PPPM as a function of the number of reciprocal reflections and the slab factor for a 2:1 salt confined between dielectric interfaces @yuan2021particle.]],
 )
 
-A rigorous error analysis is thus very important for the effective application of the EwaldELC method in systems with dielectric confinement.
+A rigorous error analysis is thus very important for the effective application.
 
-#pagebreak()
+== Error estimation
+
+#timecounter(1)
 
 In our work @icm_error, we show that the error of ICM-EwaldELC method is given as follows:
 $
-  cal(E) ~  underbrace(O(e^(-s^2) / (s^2)), "Ewald sum") + underbrace(O(abs(gamma_u gamma_d)^(floor((M + 1) / 2)) e^( - (4 pi H floor((M + 1) / 2)) / max(L_x, L_y) )), "Image charge") + underbrace(O(e^( - alpha^2 (L_z - H)^2 ) ), "Trapezoidal rule") \ + underbrace(O(e^( - (2 pi (L_z - H)) / max(L_x, L_y) ) + sum_(l=1)^M (abs(gamma_d^(ceil(l/2)) gamma_u^(floor(l/2))) + abs(gamma_d^(floor(l/2)) gamma_u^(ceil(l/2)))) e^( - (2 pi (L_z - (l + 1) H)) / max(L_x, L_y) )), "ELC term")
+  cal(E) ~  & underbrace(O(e^(-s^2) / (s^2)), "Ewald sum") + underbrace(O(e^( - alpha^2 (L_z - H)^2 ) ), "Trapezoidal rule") + underbrace(O(abs(gamma_u gamma_d)^(floor((M + 1) / 2)) e^( - (4 pi H floor((M + 1) / 2)) / max(L_x, L_y) )), "Image charge") \ 
+  & + underbrace(O(e^( - (2 pi (L_z - H)) / max(L_x, L_y) ) + sum_(l=1)^M (abs(gamma_d^(ceil(l/2)) gamma_u^(floor(l/2))) + abs(gamma_d^(floor(l/2)) gamma_u^(ceil(l/2)))) e^( - (2 pi (L_z - (l + 1) H)) / max(L_x, L_y) )), "ELC term")
 $
 with the assumption that $abs(gamma_u) <= 1$ and $abs(gamma_d) <= 1$.
 
@@ -341,19 +362,23 @@ with the assumption that $abs(gamma_u) <= 1$ and $abs(gamma_d) <= 1$.
 
 === Image charge series
 
-Error induced by truncation of the image charge series decays exponentially with the layer number $M$, the speed depends on $gamma$ and aspect ratio $H / max(L_x, L_y)$.
+#timecounter(1)
+
+Error induced by truncation of the image charge series decays exponentially with the layer number $M$, the speed depends on $gamma$ and aspect ratio $L_x / H$.
 $
   cal(E) ~ O(abs(gamma_u gamma_d)^(floor((M + 1) / 2)) e^( - (4 pi H floor((M + 1) / 2)) / max(L_x, L_y) ))
 $
 
 #figure(
   image("figs/icm_image_charge_error.png", width: 550pt),
-  caption: [#text(15pt)[Error of image charge series as a function of the layer number $M$ for different $gamma$ and aspect ratio $H / max(L_x, L_y)$, the dashed lines are fitted according to the theoretical prediction.]],
+  caption: [#text(15pt)[Error of image charge series as a function of the layer number $M$ for different $gamma$ and aspect ratio $L_x / H$, the dashed lines are fitted according to the theoretical prediction.]],
 )
 
 #pagebreak()
 
 === ELC term
+
+#timecounter(1)
 
 First consider the case when $gamma_u = gamma_d = 0$, i.e., the system is homogeneous, then
 $
@@ -368,7 +393,9 @@ we thus define the padding ratio $R = (L_z - H) / max(L_x, L_y)$, and ELC term d
 
 #pagebreak()
 
-If $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) <= 1$, the ELC term is a constant independent of $M$:
+#timecounter(1)
+
+If $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) <= 1$, the ELC term is independent of $M$:
 $
   cal(E) ~ O((gamma_u e^((2 pi H) / max(L_x, L_y)) + gamma_d e^((2 pi H) / max(L_x, L_y)) + 2)e^( - (2 pi (L_z - H)) / max(L_x, L_y)))
 $
@@ -380,6 +407,8 @@ $
 
 #pagebreak()
 
+#timecounter(1)
+
 Interestingly, if $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) > 1$, the ELC term grows exponentially to $M$:
 $
   cal(E) ~ O(abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y)))^(M / 2) e^(- (2 pi (L_z - H)) / max(L_x, L_y)))
@@ -390,16 +419,18 @@ $
   caption: [#text(15pt)[Error of ELC term as a function of $M$ and $R$. We fix $L_x = L_y = 10$, $H = 0.5$ and $gamma_u = gamma_d = 1$ so that $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) > 1$]],
 )
 
-#pagebreak()
+// #pagebreak()
 
-Our results well explain the behavior of the error of ICM-EwaldELC method in the literature @yuan2021particle.
+// Our results well explain the behavior of the error of ICM-EwaldELC method in the literature @yuan2021particle.
 
-#figure(
-  image("figs/icm_error_yuan.png", width: 700pt),
-  caption: [#text(15pt)[Repeat of the results in @yuan2021particle with fitted lines according to our theoretical prediction, where $L_x = L_y = 15$, $H = 5$. The system is a 2:1 electrolyte with $39$ particles.]],
-)
+// #figure(
+//   image("figs/icm_error_yuan.png", width: 700pt),
+//   caption: [#text(15pt)[Repeat of the results in @yuan2021particle with fitted lines according to our theoretical prediction, where $L_x = L_y = 15$, $H = 5$. The system is a 2:1 electrolyte with $39$ particles.]],
+// )
 
 == Parameter selection
+
+#timecounter(2)
 
 Given the system size $L_x, L_y, H$, the dielectric constants $epsilon_u, epsilon_d, epsilon_c$, and desired precision $epsilon$, we can select the parameters as follows:
 
@@ -425,6 +456,8 @@ Select $alpha$ and $s$ for Ewald splitting: $alpha >= sqrt(- log(epsilon)) / (L_
 
 #pagebreak()
 
+#timecounter(1)
+
 We applied our method for system with $L_x = L_y = 10$, $H = 1$, $gamma_u = gamma_d = 0.6$ and $1$.
 
 #align(center,
@@ -439,21 +472,292 @@ We applied our method for system with $L_x = L_y = 10$, $H = 1$, $gamma_u = gamm
 
 = Algorithms for Q2D Systems
 
-== Overview
+== Random batch Ewald2D method
+
+#timecounter(2)
+
+=== Overview
+
+- For the dielectrically confined Q2D systems.
+- Accelerated by random batch Ewald method, with linear complexity.
+- Reduce the complexity of ICM-EwaldELC based method from $O(M N)$ to $O(M + N)$.
+- Parallelizable and scalable.
+
+=== Basic idea
+
+Recall that in EwaldELC, long-range energy of the Q2D system is approximated by that of a padded 3D system.
+$
+  U_("Q2D")^l approx underbrace((2 pi) / (L_x L_y L_z) sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 (sum_(i = 1)^N q_i e^(i k r_i))^2 - alpha / sqrt(pi) sum_(i=1)^N q_i^2, #text[$U_("3D")^l$]) + U_("YB")
+$
+// A direct forward idea is to calculate $U_("3D")^l$ via random batch Ewald, resulting in an $O(N)$ algorithm.
+By accelerating $U_("3D")^l$, the complexity of EwaldELC is reduced. For example, PPPM2D accelerates via FFT and has a complexity of $O(N log N)$. However, it suffers from the huge zero padding for strongly confined systems.
+
+Our idea is to accelerate $U_("3D")^l$ via random batch Ewald method.
+
+#pagebreak()
+
+#timecounter(1)
+
+Random batch Ewald method @Jin2020SISC is a stochastic method proposed to accelerate the Ewald3D summation.
+The main idea is to sample the long-range part in the Fourier space using importance sampling instead of summing over all the Fourier modes.
+$
+  sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 (sum_(i = 1)^N q_i e^(i k r_i))^2 approx (sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2))) / P sum_(k in cal(K)_P) 1 / k^2 (sum_(i = 1)^N q_i e^(i k r_i))^2,
+$
+where $cal(K)_P$ is the set of $P$ Fourier modes sampled from the distribution $cal(P) (k) ~ e^(- k^2 / (4 alpha^2))$.
+$P$ is proven to be an $O(1)$ constant so that the total complexity is $O(P N)$.
+
+#figure(
+  grid(columns:2, gutter: 25pt, 
+    image("figs/rbe_accuracy.png", height: 220pt),
+    image("figs/rbe_scale.png", height: 220pt),
+  ),
+  caption: [#text(15pt)[Accuracy and scalability of random batch Ewald method @liang2022superscalability.]],
+)
+
+#pagebreak()
+
+#timecounter(1)
+
+RBE is not sensitive to the aspect ratio of the system.
+
+#figure(
+  image("figs/rbe2d_accuracy.png", width: 600pt),
+  caption: [#text(15pt)[Accuracy of RBE2D method for different aspect ratios.]],
+)
+
+#pagebreak()
+
+#timecounter(1)
+
+=== RBE2D for dielectrically confined systems
+
+With the ICM-EwaldELC method, RBE2D can be applied to the dielectrically confined systems:
+$
+  U_("3D")^M = (2 pi) / (L_x L_y L_z) sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 rho_k overline(rho)_k^M - alpha / sqrt(pi) sum_(i=1)^N q_i^2
+$
+where
+$
+  rho_k = sum_(i = 1)^N q_i e^( - i k r_i) \ overline(rho)_k^M = sum_(j = 1)^N q_j (e^(i k r_j) + sum_(l = 1)^M (gamma_+^l e^(i k r_(j +)^l) + gamma_-^l e^(i k r_(j -)^l)))
+$
+
+However, cost of evaluating $overline(rho)_k^M$ is $O(M N)$, which is too expensive.
+
+#pagebreak()
+
+#timecounter(1)
+
+=== From $O(M N)$ to $O(M + N)$
+
+Recall the location of image charges:
+$
+  r_(+)^(l) = (x, y, (-1)^l z + 2 ceil(l/2) H) " and " r_(-)^(l) = (x, y, (-1)^l z - 2 floor(l/2) H)
+$
+Notice that
+$
+  overline(rho)_k^M = sum_(j = 1)^N q_j e^(i k r_j) (1 + e^(-2 i k z_j) Y_("odd")(k_z) + Y_("even")(k_z)) \
+  Y_("odd")(k_z) = sum_(l = 1, "odd")^M (gamma_+^l e^(i k_z (l + 1) H) + gamma_-^l e^( - i k_z (l - 1) H)) \
+  Y_("even")(k_z) = sum_(l = 1, "even")^M (gamma_+^l e^(i k_z l H) + gamma_-^l e^( - i k_z (l - 1) H))
+$
+Then for each Fourier mode $k$, one can compute $Y_("odd")(k_z)$ and $Y_("even")(k_z)$ in $O(M)$ time, and then $overline(rho)_k^M$ in $O(N)$ time. The overall complexity is $O(M + N)$.
+
+
+#pagebreak()
+
+#timecounter(1)
+
+#align(center,
+  image("figs/rbe2d_table.png", height: 110pt),
+)
+
+#figure(
+  image("figs/rbe2d_dielectric.png", width: 500pt),
+  caption: [#text(15pt)[Accuracy of RBE2D method for dielectrically confined electrolytes, $P = 100$.]],
+)
+
+#pagebreak()
+
+=== CPU performance
+
+#timecounter(1)
+
+The SPC/E bulk water systems are simulated, where the system dimensions are set as $L_x = L_y = H$, and the system size changes as one varies $N$ with the density of water being fixed at $1 "g/cm"^3$.
+
+#figure(
+  image("figs/rbe2d_runtime.png", width: 700pt),
+  caption: [#text(15pt)[CPU performance of RBE2D method, compared with PPPM. (Left) number of CPU cores is fixed as 64, (Right) number of atoms is fixed as 139968, inset shows the strong parallel efficiency.]],
+)
+
+#pagebreak()
+
+#timecounter(1)
+
+=== Advantages
+
+- Mesh free, only use simple data structure.
+- Not sensitive to the aspect ratio of the system.
+- Parallelizable and scalable.
+
+=== Disadvantages
+
+- Stochastic, replying on law of large numbers.
+- Limited to planar systems with uniform dielectric constant.
+- Strong convergence and ergodicity remaining an open question.
+
+== Other methods
+
+#timecounter(2)
 
 === Sum-of-Exponential Ewald2D method
 - For the Q2D systems in homogeneous media.
 - Reduce the complexity of double summation to $O(N)$ via SOE approximation.
 - Numerically stable.
+- Accelerated by random batch Ewald method, with linear complexity.
 
-=== Random batch Ewald2D method
-- For the dielectrically confined Q2D systems.
-- Reduce the complexity of ICM-EwaldELC based method from $O(M N)$ to $O(M + N)$.
-- Parallelizable and scalable.
+=== Fast spectral sum-of-Gaussians method
+- Also for the Q2D systems in homogeneous media.
+- Spectral method based on the sum-of-Gaussian approximation of the Coulomb kernel.
+- Accelerated by non-uniform fast Fourier transform.
 
 === Quasi-Ewald method
 - For the negatively confined Q2D systems.
 - Remove the divergence due to negative dielectric constant via singularity subtractions.
+
+
+// == Short summary
+
+// #timecounter(1)
+
+// In summary, we developed a series of methods for simulating quasi-2D charged systems, including:
+
+// - SOEwald2D method for non-dielectrically confined systems.
+// - RBE2D method for dielectrically confined systems.
+// - QEM method for negatively confined systems.
+
+
+= Applications in MD Simulations
+
+== All-atom simulations of SPC/E water
+
+#timecounter(1)
+
+Our method is applied to the all-atom simulations of SPC/E water confined by slabs, where $L_x = L_y = H = 55.9 angstrom$ and consists of 17496 atoms.
+
+#figure(
+  image("figs/spce.png", width: 550pt),
+  caption: [#text(15pt)[All-atom simulations of SPC/E water confined by slabs.]],
+)
+
+#pagebreak()
+
+#timecounter(1)
+
+We applied our method to the simulations of SPC/E water confined by slabs with different dielectric constants, where $gamma_u = gamma_d = -0.5$, the system consists of 53367 atoms.
+
+#figure(
+  image("figs/spce_dielectric.png", width: 550pt),
+  caption: [#text(15pt)[All-atom simulations of SPC/E water dielectrically confined by slabs.]],
+)
+
+= Summary and Outlook
+
+== Summary
+
+#timecounter(1)
+
+During my PhD, I focused on confined quasi-2D charged systems, including:
+
+- Theoretical analysis of Ewald summation for dielectric-confined planar systems.
+
+- Development of novel fast algorithms for simulating quasi-2D Coulomb systems, including both stochastic methods and spectral methods, for non-dielectrically confined systems, dielectrically confined systems, and negatively confined systems.
+
+- Applications in MD simulations, including all-atom simulations of SPC/E water, and the observation of spontaneous symmetry broken solely via dielectric confinements for the first time.
+
+
+== Future works
+#timecounter(1)
+
+- Extend our methods to more complex systems, including systems with complex geometries such as curved surfaces and polarizable particles.
+
+- Extend our methods to different interaction kernels, such as the dipolar interactions, the Stokes interactions and the Yukawa interactions.
+
+- Application to the simulation of real world systems, such as biomolecular systems and colloidal systems.
+
+== Publications
+
+#text(18pt)[
+- *X. Gao*, Z. Gan, and Y. Li, Efficient particle-based simulations of Coulomb systems under dielectric nanoconfinement, (2025)
+- *X. Gao*, X. Li, and J.-G. Liu, Programming guide for solving constraint satisfaction problems with tensor networks, #emph[Chinese Physics B] 34, 050201 (2025)
+- *X. Gao*, Q. Zhou, Z. Gan, and J. Liang, Accurate error estimates and optimal parameter selection in Ewald summation for dielectrically confined Coulomb systems, Arxiv:2503.18126 (2025)
+- Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Random batch Ewald method for dielectrically confined Coulomb systems, Arxiv:2405.06333 (2025). Accepted by #emph[SIAM Journal on Scientific Computing]
+- Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Fast algorithm for quasi-2D Coulomb systems. #emph[Journal of Computational Physics] 113733, (2025)
+- *X. Gao*, Y.-J. Wang, P. Zhang, and J.-G. Liu, Automated discovery of branching rules with optimal complexity for the maximum independent set problem, Arxiv:2412.07685 (2024)
+- *X. Gao*, S. Jiang, J. Liang, Z. Xu, and Q. Zhou, A fast spectral sum-of-Gaussians method for electrostatic summation in quasi-2D systems, Arxiv:2412.04595 (2024)
+- M. Roa-Villescas, *X. Gao*, S. Stuijk, H. Corporaal, and J.-G. Liu, Probabilistic inference in the era of tensor networks and differential programming, #emph[Physical Review Research] 6, 33261 (2024)
+- *X. Gao* and Z. Gan, Broken symmetries in quasi-2D charged systems via negative dielectric confinement, #emph[The Journal of Chemical Physics] 161, (2024)
+]
+
+#pagebreak()
+
+== Software packages
+
+#timecounter(1)
+
+- *ChebParticleMesh.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],): Toolkits for particle mesh methods (type-1 and type-2 NUFFT).
+- *CuTropicalGEMM.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/CuTropicalGEMM.jl")],): Custom GPU kernel for tropical matrix multiplication.
+- *TreeWidthSolver.jl*#footnote(text(12pt)[#link("https://github.com/ArrogantGao/TreeWidthSolver.jl")],): Solving the treewidth problem (supported by GSoC 2024).
+- *FastSpecSoG.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.jl")],): Implementation of the fast spectral SOG method.
+- *EwaldSummations.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/EwaldSummations.jl")],): Various Ewald summation methods with parallelization.
+- *OptimalBranching.jl*#footnote(text(12pt)[#link("https://github.com/OptimalBranching/OptimalBranching.jl")],): Implementation of the optimal branching algorithm.
+
+// === Contributions to popular packages
+
+// - *OMEinsum.jl*#footnote(text(12pt)[#link("https://github.com/under-Peter/OMEinsum.jl")],) (185 stars) and its backend *OMEinsumContractionOrders.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/OMEinsumContractionOrders.jl")],): Optimizing the tensor network contraction order and contracting the tensor network.
+
+= Acknowledgements
+
+#pagebreak()
+
+== Acknowledgements
+
+#let figsize = 130pt
+
+#align(center,
+grid(columns: 5, gutter: 15pt,
+  grid(rows : 3, image("photos/zechenggan.jpeg", width : figsize), "" ,  text[Prof. Zecheng Gan \ HKUST(GZ)]),
+  h(30pt), 
+  grid(rows : 3, image("photos/jinguoliu.jpeg", width : figsize), "" ,  text[Prof. Jinguo Liu, \ HKUST(GZ)]),
+  h(30pt), 
+  grid(rows : 3, image("photos/xiangyang.jpg", width : figsize), "" ,  text[Prof. Yang Xiang, \ HKUST]),
+  grid(rows : 3, image("photos/zhenlixu.jpg", width : figsize), "" ,  text[Prof. Zhenli Xu \ SJTU]),
+  h(30pt), 
+  grid(rows : 3, image("photos/shidongjiang.jpeg", width : figsize), "" ,  text[Prof. Shidong Jiang \ Flatiron Institute]),
+  h(30pt), 
+  grid(rows : 3, image("photos/panzhang.jpeg", width : figsize), "" ,  text[Prof. Pan Zhang, \ ITP, CAS]),
+  ),
+)
+
+Also thank Jiuyang Liang (SJTU & FI), Qi Zhou (SJTU) and Yijia Wang (ITP, CAS) for collaboration.
+
+
+#focus-slide[
+  Thank you for your attention!
+]
+
+#show: appendix
+
+= Appendix <touying:unoutlined>
+
+== Performance of RBE2D method
+
+#pagebreak()
+
+#figure(
+  grid(rows:2, gutter: 10pt,
+    image("figs/spce_time.png", width: 700pt),
+    image("figs/spce_time_dielectric.png", width: 700pt)
+  ),
+  caption: [#text(15pt)[CPU performance of RBE2D method, compared with PPPM, for SPC/E water without/with dielectric confinement, with different number of cores.]],
+)
 
 
 == Sum-of-Exponential Ewald2D method
@@ -572,77 +876,147 @@ The resulting stochastic method is called RBSE2D method, with *$O(N)$* complexit
   caption: [#text(15pt)[Time cost of SOEwald2D and RBSE2D methods for different system sizes.]],
 )
 
-== Random batch Ewald2D method
+== Fast spectral sum-of-Gaussians method
 
-=== Basic idea
+=== The sum-of-Gaussians approximation
 
-Recall that in EwaldELC, long-range energy of the Q2D system is approximated by that of a padded 3D system.
+In our work, we use the bilateral series approximation @beylkin2010approximation of the Coulomb kernel, where
 $
-  U_("Q2D") approx underbrace((2 pi) / (L_x L_y L_z) sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 (sum_(i = 1)^N q_i e^(i k r_i))^2 - alpha / sqrt(pi) sum_(i=1)^N q_i^2, #text[$U_("3D")$]) + U_("YB")
+  1 / r approx (2 log b) / sqrt(2 pi sigma^2) sum_(l = - infinity)^(infinity) 1 / (b^l) e^(- r^2 / (sqrt(2) b^l sigma)^2), " with" cal(E)_r < 2 sqrt(2) e^(- pi^2 / (2 log b)), r >0
 $
-A direct forward idea is to calculate $U_("3D")$ via RBE, resulting in an $O(N)$ algorithm.
+
+Based on the u-series decomposition @DEShaw2020JCP, we further split the potential into three parts:
+$
+  1 / r approx underbrace(( 1 / r - sum_(l = 0)^M w_l e^(- r^2 / s_l^2)) bb(1)_(r < r_c), "near-field")+ underbrace(sum_(l = 0)^m w_l e^(- r^2 / s_l^2), "mid-range") + underbrace(sum_(l = m + 1)^M w_l e^(- r^2 / s_l^2), "long-range")
+$
+The weight of the narrowest Gaussian is modified to be
+$
+  w_0 = omega (2 log b) / (sqrt(2 pi sigma^2))
+$
+to enforce the $C^0$ and $C^1$ continuity of the near-field potential at $r = r_c$, which is important for MD simulations @shamshirgar2019regularizing.
+
+// #pagebreak()
+
+// === Near-field potential
+
+// #timecounter(1)
+
+// The near-field potential is computed by a real space truncation.
 
 #pagebreak()
-Surprisingly, RBE is not sensitive to the aspect ratio of the system.
+
+=== Splitting the far-field potential
+
+// How to determine the turning point $m$? 
+
+Selecting $m$ so that $s_m < eta L_z < s_(m+1)$, where $eta$ is $O(1)$ constant.
 
 #figure(
-  image("figs/rbe2d_accuracy.png", width: 600pt),
-  caption: [#text(15pt)[Accuracy of RBE2D method for different aspect ratios.]],
+  image("figs/farfield.svg", width: 400pt),
+  caption: [Mid-range part and long-range part of the potential, $L_z = 10$, $eta approx 0.6$.],
 )
 
 #pagebreak()
 
-=== RBE2D for dielectrically confined systems
+=== Mid-range potential
 
-Similar to the EwaldELC method, RBE2D can be applied to the dielectrically confined systems by combining with the image charge method:
 $
-  U_("3D")^M = (2 pi) / (L_x L_y L_z) sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 rho_k overline(rho)_k^M - alpha / sqrt(pi) sum_(i=1)^N q_i^2
-$
-where
-$
-  rho_k = sum_(i = 1)^N q_i e^( - i k r_i) \ overline(rho)_k^M = sum_(j = 1)^N q_j (e^(i k r_j) + sum_(l = 1)^M (gamma_+^l e^(i k r_(j +)^l) + gamma_-^l e^(i k r_(j -)^l)))
+  Phi_("mid")^l (arrow(r)) = sum_(arrow(n)) sum_(j = 1)^N q_j w_l e^(- (arrow(r) - arrow(r)_j + arrow(n) circle.small arrow(L))^2 / s_l^2), quad s_l < eta L_z
 $
 
-However, cost of evaluating $overline(rho)_k^M$ is $O(M N)$, which is too expensive.
+
+The mid-range potential is computed by a standard Fourier spectral solver #footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],) with *little zero padding* ($lambda_z < 2$ for double precision).
+*No need of the kernel truncation* in the free direction due to the smoothness and separability of the Gaussian.
+
+#align(center, canvas({
+  import draw: *
+  let box_loc = 3.5
+  let box_1 = (-2 * box_loc, 0)
+  let box_2 = (-box_loc, 0)
+  let box_3 = (0, 0)
+  let box_4 = (box_loc, 0)
+  let box_5 = (2 * box_loc, 0)
+
+  content(box_1, box(text(15pt)[Gridding], stroke: black, inset: 10pt), name: "box1")
+  content(box_2, box(text(15pt)[FFT], stroke: black, inset: 10pt), name: "box2")
+  content(box_3, box(text(15pt)[Scaling], stroke: black, inset: 10pt), name: "box3")
+  content(box_4, box(text(15pt)[IFFT], stroke: black, inset: 10pt), name: "box4")
+  content(box_5, box(text(15pt)[Gathering], stroke: black, inset: 10pt), name: "box5")
+
+  line("box1", "box2", mark: (end: "straight"))
+  line("box2", "box3", mark: (end: "straight"))
+  line("box3", "box4", mark: (end: "straight"))
+  line("box4", "box5", mark: (end: "straight"))
+}))
+
+The process is similar to type-1 and type-2 NUFFT in 3D @barnett2019parallel.
+*No upsampling* is needed in gridding and gathering steps since the Fourier transform of the Gaussian decays quickly and it compensates the loss of accuracy in calculating the Fourier transform of the data.
+
 
 #pagebreak()
 
-=== From $O(M N)$ to $O(M + N)$
+=== Long-range potential
 
-Recall the location of image charges:
 $
-  r_(+)^(l) = (x, y, (-1)^l z + 2 ceil(l/2) H) " and " r_(-)^(l) = (x, y, (-1)^l z - 2 floor(l/2) H)
+  Phi_("long")^l (arrow(r)) = sum_(arrow(n)) sum_(j = 1)^N q_j w_l e^(- (arrow(r) - arrow(r)_j + arrow(n) circle.small arrow(L))^2 / s_l^2), quad s_l > eta L_z
 $
-Notice that
-$
-  overline(rho)_k^M = sum_(j = 1)^N q_j e^(i k r_j) (1 + e^(-2 i k z_j) Y_("odd")(k_z) + Y_("even")(k_z)) \
-  Y_("odd")(k_z) = sum_(l = 1, "odd")^M (gamma_+^l e^(i k_z (l + 1) H) + gamma_-^l e^( - i k_z (l - 1) H)) \
-  Y_("even")(k_z) = sum_(l = 1, "even")^M (gamma_+^l e^(i k_z l H) + gamma_-^l e^( - i k_z (l - 1) H))
-$
-Then for each Fourier mode $k$, one can compute $Y_("odd")(k_z)$ and $Y_("even")(k_z)$ in $O(M)$ time, and then $overline(rho)_k^M$ in $O(N)$ time. The overall complexity is $O(M + N)$.
 
+The long-range potential is computed by a Fourier-Chebyshev solver.
+
+The extremely smooth long-range Gaussians are interpolated on the Chebyshev proxy points in $z$, similar to that of the periodic FMM (Pei, Askham, Greengard & Jiang, 2023), and only *$O(1)$ number of Chebyshev points are required*.
+
+Then 2D NUFFT like steps can be used to evaluate the potential on a tensor-product grid, where upsampling is also not needed.
+
+#align(center, canvas({
+  import draw: *
+  let box_loc = 7
+  let box_1 = (-box_loc, 0)
+  let box_2 = (0, 0)
+  let box_3 = (box_loc, 0)
+
+  content(box_1, box(text(15pt)[Chebyshev interpolation], stroke: black, inset: 10pt), name: "box1")
+  content(box_2, box(text(15pt)[2D NUFFT like steps], stroke: black, inset: 10pt), name: "box2")
+  content(box_3, box(text(15pt)[Evaluating polynomial], stroke: black, inset: 10pt), name: "box3")
+
+  line("box1", "box2", mark: (end: "straight"))
+  line("box2", "box3", mark: (end: "straight"))
+
+}))
+
+In cubic systems, $L_x ~ L_y ~ L_z$, $O(1)$ Fourier modes in $x y$ and $O(1)$ Chebyshev points in $z$, no need for NUFFT.
+
+In strongly confined systems, $s_0 > eta L_z$, only long range potential is needed.
 
 #pagebreak()
 
-#align(center,
-  image("figs/rbe2d_table.png", height: 110pt),
-)
+=== Complexity
+
+Using DFT for long-range potential, the complexity is
+$
+  O"("underbrace(4 pi r_c^3 rho_r N, "near-field") + underbrace(cal(P)_x cal(P)_y cal(P)_z N + (lambda_z (1 + delta / L_z)) / (r_c^3 rho_r) N log N, "mid-range") + underbrace((P L_x L_y) / (eta^2 L_z^2) N, "long-range") ")"
+$
+where $cal(P)_x, cal(P)_y, cal(P)_z$ are the window supports, $lambda_z$ is the padding ratio, $delta$ is the extended length of the box in the free direction to accommodate the support of the window function, $P$ is the number of Chebyshev points.
+By taking $r_c ~ O(1)$ and assume $L_z ~ O(sqrt(L_x L_y))$, the complexity is $O(N log N)$.
+
+Using 2D-NUFFT for long-range potential, the complexity is
+$
+  O"("underbrace(4 pi r_c^3 rho_r N, "near-field") + underbrace(cal(P)_x cal(P)_y cal(P)_z N + (lambda_z (1 + delta / L_z)) / (r_c^3 rho_r) N log N, "mid-range") + underbrace(cal(P)_x cal(P)_y P N +  (P) / (rho_r L_z^3 eta^2) N log N, "long-range") ")"
+$
+which is needed when $L_z << L_x, L_y$, the total complexity is also $O(N log N)$.
+
+== Numerical results
+
+The method #footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.jl")],) is benchmarked on the following systems:
+- Cubic systems with fixed aspect ratio equals to $1$.
+- Strongly confined systems with fixed $L_z$, aspect ratio up to $10^(3.5)$
 
 #figure(
-  image("figs/rbe2d_dielectric.png", width: 500pt),
-  caption: [#text(15pt)[Accuracy of RBE2D method for dielectrically confined electrolytes, $P = 100$.]],
+  image("figs/sog_benchmark.png", width: 370pt),
+  caption: [#text(15pt)[Error and time cost for the SOG method in the (a,c) cubic and (b,d) strongly confined systems.]],
 )
+
 
 #pagebreak()
-
-=== CPU performance
-
-The SPC/E bulk water systems are simulated, where the system dimensions are set as $L_x = L_y = H$, and the system size changes as one varies $N$ with the density of water being fixed at $1 "g/cm"^3$.
-
-#figure(
-  image("figs/rbe2d_runtime.png", width: 700pt),
-  caption: [#text(15pt)[CPU performance of RBE2D method, compared with PPPM. (Left) number of CPU cores is fixed as 64, (Right) number of atoms is fixed as 139968, inset shows the strong parallel efficiency.]],
-)
 
 == Quasi-Ewald method
 
@@ -766,50 +1140,11 @@ Further combined with random batch sampling, we obtain a method with $O(N)$ comp
   caption: [#text(15pt)[(Left) Distributions of ion density in $z$ for symmetric electrolytes containing 218 cations and 218 anions. (Right) time cost of QEM method for different system sizes.]],
 )
 
-
-== Short summary
-
-In summary, we developed a series of methods for simulating quasi-2D charged systems, including:
-
-- SOEwald2D method for non-dielectrically confined systems.
-- RBE2D method for dielectrically confined systems.
-- QEM method for negatively confined systems.
-
-=== Advantages
-
-- Mesh free, only use simple data structure.
-- Not sensitive to the aspect ratio of the system.
-- Parallelizable and scalable.
-
-=== Disadvantages
-
-- Stochastic, replying on law of large numbers.
-- Limited to planar systems with uniform dielectric constant.
-- Strong convergence and ergodicity remaining an open question.
-
-= Applications in MD Simulations
-
-== All-atom simulations of SPC/E water
-
-Our method is applied to the all-atom simulations of SPC/E water confined by slabs, where $L_x = L_y = H = 55.9 angstrom$ and consists of 17496 atoms.
-
-#figure(
-  image("figs/spce.png", width: 550pt),
-  caption: [#text(15pt)[All-atom simulations of SPC/E water confined by slabs.]],
-)
-
 #pagebreak()
 
-We applied our method to the simulations of SPC/E water confined by slabs with different dielectric constants, where $gamma_u = gamma_d = -0.5$, the system consists of 53367 atoms.
+=== Broken symmetries via dielectric confinements
 
-#figure(
-  image("figs/spce_dielectric.png", width: 550pt),
-  caption: [#text(15pt)[All-atom simulations of SPC/E water dielectrically confined by slabs.]],
-)
-
-== Broken symmetries via dielectric confinements
-
-With the help of the quasi Ewald method, we observed spontaneous symmetry broken via dielectric confinements when $abs(gamma) > 1$.
+We observed spontaneous symmetry broken solely via dielectric confinements in 1:1 electrolyte systems.
 
 #figure(
   image("figs/ssb.png", width: 700pt),
@@ -823,125 +1158,7 @@ With the help of the quasi Ewald method, we observed spontaneous symmetry broken
   caption: [#text(15pt)[Detailed force analysis of the symmetry broken phase.]],
 )
 
-// = Introduction to Other Works
-
-// == Fast spectral sum-of-Gaussians method
-
-// Based on the sum-of-Gaussian approximation of the Coulomb kernel and non-uniform fast Fourier transform, we developed a fast spectral method for the Q2D systems in homogeneous media.
-// We split the Coulomb kernel into three parts:
-// $
-//   1 / r approx underbrace(( 1 / r - sum_(l = 0)^M w_l e^(- r^2 / s_l^2)) bb(1)_(r < r_c), "near-field")+ underbrace(sum_(l = 0)^m w_l e^(- r^2 / s_l^2), "mid-range") + underbrace(sum_(l = m + 1)^M w_l e^(- r^2 / s_l^2), "long-range")
-// $
-
-// The mid-range potential is computed by a standard Fourier spectral solver #footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],) with *little zero padding* ($lambda_z < 2$ for double precision).
-// *No need of the kernel truncation* in the free direction due to the smoothness and separability of the Gaussian.
-
-// The extremely smooth long-range Gaussians are interpolated on the Chebyshev proxy points in $z$, similar to that of the periodic FMM (Pei, Askham, Greengard & Jiang, 2023), and only *$O(1)$ number of Chebyshev points are required*.
-
-// #pagebreak()
-
-
-// The method #footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.jl")],) is benchmarked on the following systems:
-// - Cubic systems with fixed aspect ratio equals to $1$.
-// - Strongly confined systems with fixed $L_z$, aspect ratio up to $10^(3.5)$
-
-// #figure(
-//   image("figs/sog_benchmark.png", width: 370pt),
-//   caption: [#text(15pt)[Error and time cost for the SOG method in the (a,c) cubic and (b,d) strongly confined systems.]],
-// )
-
-= Summary and Outlook
-
-== Summary
-
-During my PhD, I focused on confined quasi-2D charged systems, including:
-
-- Theoretical analysis of Ewald summation for dielectric-confined planar systems.
-
-- Development of novel fast algorithms for simulating quasi-2D Coulomb systems, including both stochastic methods and spectral methods, for non-dielectrically confined systems, dielectrically confined systems, and negatively confined systems.
-
-- Applications in MD simulations, including all-atom simulations of SPC/E water, and the observation of spontaneous symmetry broken solely via dielectric confinements for the first time.
-
-
-== Future works
-
-- Extend our methods to more complex systems, including systems with complex geometries such as curved surfaces and polarizable particles.
-
-- Extend our methods to different interaction kernels, such as the dipolar interactions, the Stokes interactions and the Yukawa interactions.
-
-- Application to the simulation of real world systems, such as biomolecular systems and colloidal systems.
-
-== Publications
-#timecounter(1)
-
-#text(18pt)[
-- *X. Gao*, Z. Gan, and Y. Li, Efficient particle-based simulations of Coulomb systems under dielectric nanoconfinement, (2025)
-- *X. Gao*, X. Li, and J.-G. Liu, Programming guide for solving constraint satisfaction problems with tensor networks, #emph[Chinese Physics B] 34, 050201 (2025)
-- *X. Gao*, Q. Zhou, Z. Gan, and J. Liang, Accurate error estimates and optimal parameter selection in Ewald summation for dielectrically confined Coulomb systems, Arxiv:2503.18126 (2025)
-- Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Random batch Ewald method for dielectrically confined Coulomb systems, Arxiv:2405.06333 (2025). Accepted by #emph[SIAM Journal on Scientific Computing]
-- Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Fast algorithm for quasi-2D Coulomb systems. #emph[Journal of Computational Physics] 113733, (2025)
-- *X. Gao*, Y.-J. Wang, P. Zhang, and J.-G. Liu, Automated discovery of branching rules with optimal complexity for the maximum independent set problem, Arxiv:2412.07685 (2024)
-- *X. Gao*, S. Jiang, J. Liang, Z. Xu, and Q. Zhou, A fast spectral sum-of-Gaussians method for electrostatic summation in quasi-2D systems, Arxiv:2412.04595 (2024)
-- M. Roa-Villescas, *X. Gao*, S. Stuijk, H. Corporaal, and J.-G. Liu, Probabilistic inference in the era of tensor networks and differential programming, #emph[Physical Review Research] 6, 33261 (2024)
-- *X. Gao* and Z. Gan, Broken symmetries in quasi-2D charged systems via negative dielectric confinement, #emph[The Journal of Chemical Physics] 161, (2024)
-]
-
 #pagebreak()
-
-== Software packages
-
-// === My packages
-
-- *ChebParticleMesh.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/ChebParticleMesh.jl")],): Toolkits for particle mesh methods (type-1 and type-2 NUFFT).
-- *CuTropicalGEMM.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/CuTropicalGEMM.jl")],): Custom GPU kernel for tropical matrix multiplication.
-- *TreeWidthSolver.jl*#footnote(text(12pt)[#link("https://github.com/ArrogantGao/TreeWidthSolver.jl")],): Solving the treewidth problem (supported by GSoC 2024).
-- *FastSpecSoG.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/FastSpecSoG.jl")],): Implementation of the fast spectral SOG method.
-- *EwaldSummations.jl*#footnote(text(12pt)[#link("https://github.com/HPMolSim/EwaldSummations.jl")],): Various Ewald summation methods with parallelization.
-- *OptimalBranching.jl*#footnote(text(12pt)[#link("https://github.com/OptimalBranching/OptimalBranching.jl")],): Implementation of the optimal branching algorithm.
-
-// === Contributions to popular packages
-
-// - *OMEinsum.jl*#footnote(text(12pt)[#link("https://github.com/under-Peter/OMEinsum.jl")],) (185 stars) and its backend *OMEinsumContractionOrders.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/OMEinsumContractionOrders.jl")],): Optimizing the tensor network contraction order and contracting the tensor network.
-
-= Acknowledgements
-
-#pagebreak()
-
-== Acknowledgements
-
-#let figsize = 130pt
-
-#align(center,
-grid(columns: 5, gutter: 15pt,
-  grid(rows : 3, image("photos/zechenggan.jpeg", width : figsize), "" ,  text[Prof. Zecheng Gan \ HKUST(GZ)]),
-  h(30pt), 
-  grid(rows : 3, image("photos/jinguoliu.jpeg", width : figsize), "" ,  text[Prof. Jinguo Liu, \ HKUST(GZ)]),
-  h(30pt), 
-  grid(rows : 3, image("photos/xiangyang.jpg", width : figsize), "" ,  text[Prof. Yang Xiang, \ HKUST]),
-  grid(rows : 3, image("photos/zhenlixu.jpg", width : figsize), "" ,  text[Prof. Zhenli Xu \ SJTU]),
-  h(30pt), 
-  grid(rows : 3, image("photos/shidongjiang.jpeg", width : figsize), "" ,  text[Prof. Shidong Jiang \ Flatiron Institute]),
-  h(30pt), 
-  grid(rows : 3, image("photos/panzhang.jpeg", width : figsize), "" ,  text[Prof. Pan Zhang, \ ITP, CAS]),
-  ),
-)
-
-Also thank Jiuyang Liang (SJTU & FI), Qi Zhou (SJTU) and Yijia Wang (ITP, CAS) for collaboration.
-
-
-#focus-slide[
-  Thank you for your attention!
-]
-
-#show: appendix
-
-// = Appendix <touying:unoutlined>
-
-// == Supplementary results
-
-// This is a result.
-
-// #pagebreak()
 
 == References
 
