@@ -35,7 +35,7 @@
 #let globalvars = state("t", 0)
 #let timecounter(minutes) = [
   #globalvars.update(t => t + minutes)
-  #place(bottom + right,text(16pt, red)[#context globalvars.get()min])
+  // #place(bottom + right,text(16pt, red)[#context globalvars.get()min])
 ]
 #let clip(image, top: 0pt, bottom: 0pt, left: 0pt, right: 0pt) = {
   box(clip: true, image, inset: (top: -top, right: -right, left: -left, bottom: -bottom))
@@ -116,7 +116,7 @@ Molecular dynamics simulation is a widely used method based on theoretical model
 
 #timecounter(2)
 
-Quasi-2D systems @mazars2011long are at the macroscopic scale in $x y$, but microscopic in $z$, which are widely exist in nature and engineering, for example, cell membranes and electrolyte near surfaces.
+Quasi-2D systems @mazars2011long are at the macroscopic scale in $x y$, but microscopic in $z$, which are widely exist in nature and engineering, for example, cell membranes, electrolyte near surfaces and ultrathin polymer films.
 
 Quasi-2D systems are always modeled to be doubly periodic in numerical simulations.
 
@@ -210,7 +210,7 @@ Another challenge is the polarization effect, various strategies have been devel
 These methods are also accelerated by FFT or FMM to reach a complexity of $O(N log N)$ or $O(N)$.
 However, the computational cost significantly increases compared to the homogeneous case, especially for strongly confined systems.
 
-// Rigorous error analysis and parameter selection are also lacking.
+Main target of our work is to develop efficient methods for quasi-2D systems, overcomes the challenges mentioned above.
 
 = Theoretical Analysis
 
@@ -287,7 +287,7 @@ $
 The governing equation of the pairwise electrostatic interaction $G(r, r')$:
 $
   cases(
-    gradient_r (epsilon(r) gradient_r G(r, r')) = delta(r - r') & "if" r in R^3,
+    gradient_r (epsilon(r) gradient_r G(r, r')) = - delta(r - r') & "if" r in R^3,
     G(r, r') |_- = G(r, r') |_+ & "if" r in partial Omega_c,
     epsilon_c gradient_r G(r, r') |_- = epsilon_u gradient_r G(r, r') |_+ & "if" r in partial Omega_c \u{2229} partial Omega_u,
     epsilon_c gradient_r G(r, r') |_+ = epsilon_d gradient_r G(r, r') |_- & "if" r in partial Omega_c \u{2229} partial Omega_d,
@@ -531,7 +531,7 @@ RBE is not sensitive to the aspect ratio of the system.
 
 === RBE2D for dielectrically confined systems
 
-With the ICM-EwaldELC method, RBE2D can be applied to the dielectrically confined systems:
+Combined with the image charge method, RBE2D can be applied to the dielectrically confined systems:
 $
   U_("3D")^M = (2 pi) / (L_x L_y L_z) sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 rho_k overline(rho)_k^M - alpha / sqrt(pi) sum_(i=1)^N q_i^2
 $
@@ -657,6 +657,33 @@ We applied our method to the simulations of SPC/E water confined by slabs with d
   image("figs/spce_dielectric.png", width: 550pt),
   caption: [#text(15pt)[All-atom simulations of SPC/E water dielectrically confined by slabs.]],
 )
+
+== Broken symmetries via dielectric confinements
+
+With the quasi-Ewald method, we examined the force between two charged particles in the presence of negative dielectric confinements.
+The force is oscillatory as a function of the distance between the two particles, and like-charge attraction is observed.
+
+#figure(
+  image("figs/qem_force.png", width: 700pt),
+  caption: [#text(15pt)[Force between two charged particles in the presence of negative dielectric confinements.]],
+)
+
+#pagebreak()
+
+By simulating 1:1 electrolyte systems under negative dielectric confinements, we observed spontaneous symmetry broken solely via dielectric confinements.
+The charged particles gather into checkerboard patterns, and the system exhibits a broken symmetry.
+
+#figure(
+  image("figs/ssb.png", width: 700pt),
+  caption: [#text(15pt)[Spontaneous symmetry broken via dielectric confinements.]],
+)
+
+// #pagebreak()
+
+// #figure(
+//   image("figs/ssb_force.png", width: 600pt),
+//   caption: [#text(15pt)[Detailed force analysis of the symmetry broken phase.]],
+// )
 
 = Summary and Outlook
 
@@ -1140,23 +1167,6 @@ Further combined with random batch sampling, we obtain a method with $O(N)$ comp
   caption: [#text(15pt)[(Left) Distributions of ion density in $z$ for symmetric electrolytes containing 218 cations and 218 anions. (Right) time cost of QEM method for different system sizes.]],
 )
 
-#pagebreak()
-
-=== Broken symmetries via dielectric confinements
-
-We observed spontaneous symmetry broken solely via dielectric confinements in 1:1 electrolyte systems.
-
-#figure(
-  image("figs/ssb.png", width: 700pt),
-  caption: [#text(15pt)[Spontaneous symmetry broken via dielectric confinements.]],
-)
-
-#pagebreak()
-
-#figure(
-  image("figs/ssb_force.png", width: 600pt),
-  caption: [#text(15pt)[Detailed force analysis of the symmetry broken phase.]],
-)
 
 #pagebreak()
 
