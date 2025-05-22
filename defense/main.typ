@@ -394,7 +394,7 @@ $
 we thus define the padding ratio $R = (L_z - H) / max(L_x, L_y)$, and ELC term decays exponentially with $R$.
 
 #figure(
-  image("figs/icm_elc.png", width: 300pt),
+  image("figs/elc_error_force.svg", width: 300pt),
   caption: [#text(15pt)[Error of ELC term as a function of the padding ratio $R$ for different aspect ratio.]],
 )
 
@@ -408,7 +408,7 @@ $
 $
 
 #figure(
-  image("figs/icm_elc_decay.png", width: 600pt),
+  image("figs/error_icm_pad_gamma_0.6.svg", width: 600pt),
   caption: [#text(15pt)[Error of ELC term as a function of $M$ and $R$. We fix $L_x = L_y = 10$, $H = 0.5$ and $gamma_u = gamma_d = 0.6$ so that $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) < 1$]],
 )
 
@@ -422,7 +422,7 @@ $
 $
 
 #figure(
-  image("figs/icm_elc_increase.png", width: 600pt),
+  image("figs/error_icm_pad_gamma_1.svg", width: 600pt),
   caption: [#text(15pt)[Error of ELC term as a function of $M$ and $R$. We fix $L_x = L_y = 10$, $H = 0.5$ and $gamma_u = gamma_d = 1$ so that $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) > 1$]],
 )
 
