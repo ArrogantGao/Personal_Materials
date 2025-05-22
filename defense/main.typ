@@ -42,6 +42,7 @@
 }
 
 #let leftright(a, b) = align(center, grid(columns: 2, gutter: 30pt, align(left, box(width: 350pt)[#a]), align(left, box(width: 350pt)[#b])))
+#let leftrightw1w2(a, b, w1, w2) = align(center, grid(columns: 2, gutter: 30pt, align(left, box(width: w1)[#a]), align(left, box(width: w2)[#b])))
 
 #import "@preview/touying:0.5.5": *
 #import themes.metropolis: *
@@ -687,14 +688,17 @@ We applied the SOEWald2D method for the simulations of electrolytes in homogeneo
 
 We studied the electrolytes confined by slabs with different dielectric constants.
 
-#figure(
-  image("figs/confined_nonsym.png", width: 200pt),
-  caption: [#text(15pt)[Contraction of electrolytes in dielectrically confined 1:1 electrolyte systems with non-symmetric dielectric interfaces.]],
-)
-
-#figure(
-  image("figs/confined_sym.png", width: 400pt),
-  caption: [#text(15pt)[Contraction of electrolytes in dielectrically confined 3:1 electrolyte systems with symmetric dielectric interfaces, (a) $gamma = -0.95$, (b) $gamma = 0.95$.]],
+#leftrightw1w2(
+  figure(
+    image("figs/confined_nonsym.png", width: 250pt),
+    caption: [#text(15pt)[Contraction of electrolytes in dielectrically confined 1:1 electrolyte systems with non-symmetric dielectric interfaces.]],
+  ),
+  figure(
+    image("figs/confined_sym.png", width: 440pt),
+    caption: [#text(15pt)[Contraction of electrolytes in dielectrically confined 3:1 electrolyte systems with symmetric dielectric interfaces, (a) $gamma = -0.95$, (b) $gamma = 0.95$.]],
+  ),
+  300pt,
+  400pt
 )
 
 #pagebreak()
