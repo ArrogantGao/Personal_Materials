@@ -57,7 +57,7 @@
   config-info(
     title: [Confined Quasi-2D Coulomb Systems: Theory, Algorithms, and Applications],
     // subtitle: [],
-    author: text(23pt)[Xuanzhao Gao \ Supervisor: Prof. Zecheng Gan \ Co-supervisor: Prof. Jinguo Liu, Prof. Yang Xiang],
+    author: text(23pt)[GAO, Xuanzhao \ Supervisor: Prof. GAN, Zecheng \ Co-supervisor: Prof. LIU, Jinguo, Prof. XIANG, Yang],
     institution: text(20pt)[Advanced Materias Thrust, Function Hub \ Hong Kong University of Science and Technology (Guangzhou)],
     date: text(23pt)[2025-05-27],
   ),
@@ -273,7 +273,8 @@ $
   U_l = underbrace((2 pi) / (L_x L_y L_z) sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 (sum_(i = 1)^N q_i e^(i bold(k) dot bold(r)_i))^2 - alpha / sqrt(pi) sum_(i=1)^N q_i^2, "Ewald3D summation") + underbrace(U_("YB") , #text[$O(N)$]) + underbrace(U_("ELC"), #text[$O(N^2)$]) + underbrace(U_("Trap") , "Error")
 $
 where $bold(k) = 2 pi (m_x / L_x, m_y / L_y, m_z / L_z)$ is the reciprocal lattice vector.
-Complexity of EwaldELC method is *$O(N^(1.5))$*, and can easily be accelerated by FFT or FMM to reach linear complexity.
+Complexity of EwaldELC method is *$O(N^(1.5))$*.
+// and can easily be accelerated by FFT or FMM to reach linear complexity.
 
 
 == Image charge method revisited
@@ -618,17 +619,17 @@ The SPC/E bulk water systems are simulated, where the system dimensions are set 
 === Sum-of-Exponential Ewald2D method
 
 - For the Q2D systems in homogeneous media.
+
 - Reduce the complexity of double summation to $O(N)$ via SOE approximation.
+
 - Accelerated by random batch Ewald method, with linear complexity.
 
-// === Fast spectral sum-of-Gaussians method
-// - Also for the Q2D systems in homogeneous media.
-// - Spectral method based on the sum-of-Gaussian approximation of the Coulomb kernel.
-// - Accelerated by non-uniform fast Fourier transform.
+#linebreak()
 
 === Quasi-Ewald method
 
 - For the negatively confined Q2D systems.
+
 - Remove the divergence due to negative dielectric constant via singularity subtractions.
 
 
@@ -651,7 +652,7 @@ The SPC/E bulk water systems are simulated, where the system dimensions are set 
 
 === SPC/E water in homogeneous media
 
-Our method is applied to the all-atom simulations of SPC/E water in homogeneous media, where $L_x = L_y = H = 55.9 angstrom$ and consists of 17496 atoms.
+RBE2D is applied to the all-atom simulations of SPC/E water in homogeneous media, where $L_x = L_y = H = 55.9 angstrom$ and consists of 17496 atoms.
 
 #figure(
   image("figs/spce.png", width: 550pt),
@@ -675,7 +676,7 @@ We applied our method to the simulations of SPC/E water confined by slabs with d
 
 === Electrolytes in homogeneous media
 
-We applied the SOEWald2D method for the simulations of electrolytes in homogeneous media, with external electric field in $z$ direction.
+We applied the SOEwald2D method for the simulations of electrolytes in homogeneous media, with external electric field in $z$ direction.
 
 #figure(
   image("figs/nonconfined.png", width: 600pt),
@@ -691,11 +692,11 @@ We studied the electrolytes confined by slabs with different dielectric constant
 #leftrightw1w2(
   figure(
     image("figs/confined_nonsym.png", width: 250pt),
-    caption: [#text(15pt)[Contraction of electrolytes in dielectrically confined 1:1 electrolyte systems with non-symmetric dielectric interfaces.]],
+    caption: [#text(15pt)[Contraction of ions in dielectrically confined 1:1 electrolyte systems with non-symmetric dielectric interfaces.]],
   ),
   figure(
     image("figs/confined_sym.png", width: 440pt),
-    caption: [#text(15pt)[Contraction of electrolytes in dielectrically confined 3:1 electrolyte systems with symmetric dielectric interfaces, (a) $gamma = -0.95$, (b) $gamma = 0.95$.]],
+    caption: [#text(15pt)[Contraction of ions in dielectrically confined 3:1 electrolyte systems with symmetric dielectric interfaces, (a) $gamma = -0.95$, (b) $gamma = 0.95$.]],
   ),
   300pt,
   400pt
@@ -761,9 +762,9 @@ During my PhD, I focused on confined quasi-2D charged systems, including:
 #text(16pt)[
 1. *X. Gao*, Z. Gan, and Y. Li, Efficient particle-based simulations of Coulomb systems under dielectric nanoconfinement, (2025), under preparation
 
-2. *X. Gao*, X. Li, and J.-G. Liu, Programming guide for solving constraint satisfaction problems with tensor networks, #emph[#text(blue, "Chinese Physics B")] 34, 050201 (2025)
+2. *X. Gao*, Q. Zhou, Z. Gan, and J. Liang, Accurate error estimates and optimal parameter selection in Ewald summation for dielectrically confined Coulomb systems, Arxiv:2503.18126 (2025). Accepted by #emph[#text(blue, "Journal of Chemical Theory and Computation")]
 
-3. *X. Gao*, Q. Zhou, Z. Gan, and J. Liang, Accurate error estimates and optimal parameter selection in Ewald summation for dielectrically confined Coulomb systems, Arxiv:2503.18126 (2025)
+3. *X. Gao*, X. Li, and J.-G. Liu, Programming guide for solving constraint satisfaction problems with tensor networks, #emph[#text(blue, "Chinese Physics B")] 34, 050201 (2025)
 
 4. (Alphabetical order) Z. Gan, *X. Gao*, J. Liang, and Z. Xu, Random batch Ewald method for dielectrically confined Coulomb systems, Arxiv:2405.06333 (2025). Accepted by #emph[#text(blue, "SIAM Journal on Scientific Computing")]
 
