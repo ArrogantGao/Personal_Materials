@@ -118,8 +118,7 @@ Molecular dynamics simulation is a widely used method based on theoretical model
 #timecounter(2)
 
 Quasi-2D systems @mazars2011long are at the macroscopic scale in $x y$, but microscopic in $z$, which are widely exist in nature and engineering, for example, cell membranes, electrolyte near surfaces and ultrathin polymer films.
-
-Quasi-2D systems are always modeled to be doubly periodic in numerical simulations.
+They are always modeled as infinite planar layers, and are treated as doubly periodic in numerical simulations.
 
 #figure(
   image("figs/Q2D.png", width: 400pt),
@@ -168,21 +167,35 @@ Polarization arises naturally due to dielectric mismatch between different mater
 == Algorithms for Q2D charged systems
 #timecounter(1)
 
-// Coulomb interaction decays as $r^(-1)$ in 3D and is singular at $r=0$, which make such simulation computationally expensive.
-// Complexity of a direct sum of the Coulomb interaction in doubly periodic systems is about *$O(N^2 epsilon^(-1/3))$*.
+The bottleneck of simulating Q2D system is the Coulomb interaction.
+The electrostatic interaction in Q2D systems is given as follows:
+$
+  U = 1 / 2 sum_(i,j=1)^N sum_(bold(m)) q_i q_j G(bold(r)_i, bold(r)_j + L_bold(m)),
+$
+where $G(bold(r), bold(r)')$ is the Green's function, $L_bold(m) = (L_x m_x, L_y m_y, 0)$.
+
+If the system is homogeneous, the Green's function is given by:
+$
+  G(bold(r), bold(r)') = 1 / abs(bold(r) - bold(r)')
+$
+It decays slowly and is singular at $r=0$, which make such summation computationally expensive.
+
+#pagebreak()
+
+// Coulomb interaction 
 
 Methods have been developed to accelerate the calculation of Coulomb interaction in Q2D systems.
 
-The very first method is the Ewald2D @parry1975electrostatic method based on the Ewald splitting of the Coulomb kernel. It is accurate but with $O(N^2 log(epsilon))$ complexity.
+The very first method is the Ewald2D @parry1975electrostatic method based on the Ewald splitting of the Coulomb kernel. It is accurate but with *$O(N^2)$* complexity.
 
 To reduce the complexity, most methods rely on the following two strategies:
 
-- *Fourier spectral method* @maxian2021fast @yuan2021particle: based on Ewald splitting and fast Fourier transform (FFT), with $O(N log N)$ complexity. Example: PPPM2D, ICM-PPPM.
+- *Fourier spectral method* @maxian2021fast @yuan2021particle: based on Ewald splitting and fast Fourier transform (FFT), with *$O(N log N)$* complexity. Example: PPPM2D, ICM-PPPM.
 
 // Lindbo & Tornberg, 2011; 2012; Nestler et al., 2015; Shamshirgar & Tornberg, 2017; Shamshirgar et al., 2021; Maxian et al., 2021
 // @lindbo2011spectral @lindbo2012fast, @nestler2015fast, @shamshirgar2017spectral, @shamshirgar2021fast, @maxian2021fast
 
-- *Fast multipole methods* @greengard1987fast @liang2020harmonic: accelerated by hierarchical low-rank compression, adaptive and with $O(N)$ complexity. Example: HSMA, periodic FMM.
+- *Fast multipole methods* @greengard1987fast @liang2020harmonic: accelerated by hierarchical low-rank compression, adaptive and with *$O(N)$* complexity. Example: HSMA, periodic FMM.
 
 // (Greengard, 1987; Greengard & Rokhlin, 1987; Berman & Greengard, 1994; Yan & Shelley, 2018; Liang et al., 2020)
 // @greengard1987fast, @yan2018flexibly, @liang2020harmonic, @liang2022hsma, @jiang2023jcp, @berman1994renormalization
@@ -194,27 +207,20 @@ To reduce the complexity, most methods rely on the following two strategies:
 == Algorithms for Q2D charged systems
 #timecounter(1)
 
-For doubly periodic systems, one major challenge is the large prefactor in $O(N)$ or $O(N log N)$ compared to 3D-PBC solvers @mazars2011long, especially when the system is strongly confined in the $z$ direction, i.e., $H << L_x, L_y$.
+For doubly periodic systems, there are two major challenges:
 
+=== Strongly confinements
+
+Confinements leads to large prefactors compared to 3D-PBC solvers @mazars2011long, especially when $H << L_x, L_y$:
 - For the FFT based methods, *huge zero-padding* is required.
-
 - For the FMM based methods, *more near field contributions* is needed.
 
-// Some recently developed methods offer potential solutions to this challenge, including:
-// - Anisotropic truncation kernel method @greengard2018anisotropic
-// - Periodic FMM (Pei, Askham, Greengard & Jiang, 2023)
-// // @jiang2023jcp
-// - Dual-space multilevel kernel-splitting method @greengard2023dual
+=== Polarization effect
 
-// However, these methods have not yet been extended to handle quasi-2D systems.
-
-Another challenge is the polarization effect, various strategies have been developed in recent years, by:
-- introducing image charges @yuan2021particle @liang2020harmonic.
-
-- numerically solving the Poisson equation with interface conditions @nguyen2019incorporating @maxian2021fast @ma2021modified.
-// These methods are also accelerated by FFT or FMM to reach a complexity of $O(N log N)$ or $O(N)$.
-
-However, the computational cost significantly increases compared to the homogeneous case, especially for strongly confined systems.
+Various strategies have been developed in recent years, by:
+- Introducing image charges @yuan2021particle @liang2020harmonic.
+- Numerically solving the Poisson's equation with interface conditions @nguyen2019incorporating @maxian2021fast @ma2021modified.
+Both of them significantly increase the computational cost compared to the homogeneous case.
 
 // Main target of our work is to develop efficient methods for quasi-2D systems, overcomes the challenges mentioned above.
 
@@ -256,7 +262,7 @@ $
 where $z = |z_i - z_j|$.
 The summaitons can be truncated as $r_c = s / alpha$, and $k_c = 2 s alpha$.
 
-The resulting method is the so-called Ewald2D method, have a complexity of $O(N^2)$ due to the *unseparable double summation*.
+The resulting method is the so-called Ewald2D method, have a complexity of $O(N^2)$ due to the *unseparable double summation* over $i$ and $j$ in $U_l$.
 
 #pagebreak()
 
@@ -281,8 +287,7 @@ Complexity of EwaldELC method is *$O(N^(1.5))$*.
 
 #timecounter(1)
 
-In dielectrically confined Q2D systems, dielectric permittivity is a function of $z$:
-
+In dielectrically confined Q2D systems, we assume that the dielectric permittivity is uniform in each region, then can be written as a function of $z$:
 $
   epsilon (z) = cases(
   epsilon_u "if" z > H,
@@ -291,7 +296,7 @@ $
 )
 $
 
-The governing equation of the pairwise electrostatic interaction $G(bold(r), bold(r)')$:
+The governing equation of the Green's function $G(bold(r), bold(r)')$:
 $
   cases(
     gradient_bold(r) (epsilon(bold(r)) gradient_bold(r) G(bold(r), bold(r)')) = - delta(bold(r) - bold(r)') & "if" bold(r) in R^3,
@@ -311,7 +316,7 @@ $
     $
   ],
   align(center,
-    image("figs/gamma.png", width:130pt),
+    image("figs/gamma.png", width:100pt),
   ),
 )
 
@@ -320,7 +325,7 @@ $
 
 #timecounter(1)
 
-Assume that $epsilon_u, epsilon_d, epsilon_c$ are all positive, then $gamma_u, gamma_d in (-1, 1)$, and we get the so-called *image charge series* for the polarization potential:
+We get the so-called *image charge series* for the polarization potential:
 $
   G(bold(r), bold(r)') = 1 / (4 pi epsilon_c) [1 / abs(bold(r) - bold(r)') + sum_(l=1)^infinity (gamma_+^(l) / abs(bold(r) - bold(r)_(+)^(l) ') + gamma_-^(l) / abs(bold(r) - bold(r)_(-)^(l) '))]
 $
@@ -329,6 +334,7 @@ $
   z_+^(l) = (-1)^l z + 2 ceil(l/2) H,
   z_-^(l) = (-1)^l z - 2 floor(l/2) H.
 $
+Assume that $epsilon_u, epsilon_d, epsilon_c$ are all positive, then $gamma_u, gamma_d in (-1, 1)$, the series is decaying exponentially, and can be truncated at the $M$-th level.
 
 #align(center,
   image("figs/icm_system.png", width: 400pt)
@@ -404,6 +410,8 @@ we thus define the padding ratio $R = (L_z - H) / max(L_x, L_y)$, and ELC term d
 
 #timecounter(1)
 
+When $gamma_u, gamma_d != 0$, there are two cases, depending on the value of $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y)))$:
+
 If $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) <= 1$, the ELC term is independent of $M$:
 $
   cal(E) ~ O((gamma_u e^((2 pi H) / max(L_x, L_y)) + gamma_d e^((2 pi H) / max(L_x, L_y)) + 2)e^( - (2 pi (L_z - H)) / max(L_x, L_y)))
@@ -418,7 +426,7 @@ $
 
 #timecounter(1)
 
-Interestingly, if $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) > 1$, the ELC term grows exponentially to $M$:
+Interestingly, if $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) > 1$, the ELC term also decays exponentially to $R$, but grows exponentially to $M$:
 $
   cal(E) ~ O(abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y)))^(M / 2) e^(- (2 pi (L_z - H)) / max(L_x, L_y)))
 $
@@ -499,7 +507,7 @@ $
   U_("Q2D")^l approx underbrace((2 pi) / (L_x L_y L_z) sum_(bold(k) != bold(0)) e^(- k^2 / (4 alpha^2)) / k^2 (sum_(i = 1)^N q_i e^(i bold(k) dot bold(r)_i))^2 - alpha / sqrt(pi) sum_(i=1)^N q_i^2, #text[$U_("3D")^l$]) + U_("YB")
 $
 // A direct forward idea is to calculate $U_("3D")^l$ via random batch Ewald, resulting in an $O(N)$ algorithm.
-By accelerating $U_("3D")^l$, the complexity of EwaldELC is reduced. For example, PPPM2D accelerates via FFT and has a complexity of $O(N log N)$. However, it suffers from the huge zero padding for strongly confined systems.
+By accelerating $U_("3D")^l$, the complexity of EwaldELC is reduced. For example, PPPM2D accelerates via FFT and has a complexity of $O(N log N)$. However, it suffers from the huge zero padding for strongly confined systems and the communication overhead of FFT when using multiple CPUs.
 
 Our idea is to accelerate $U_("3D")^l$ via random batch Ewald method.
 
@@ -692,11 +700,11 @@ We studied the electrolytes confined by slabs with different dielectric constant
 #leftrightw1w2(
   figure(
     image("figs/confined_nonsym.png", width: 250pt),
-    caption: [#text(15pt)[Contraction of ions in dielectrically confined 1:1 electrolyte systems with non-symmetric dielectric interfaces.]],
+    caption: [#text(15pt)[Concentration of ions in dielectrically confined 1:1 electrolyte systems with non-symmetric dielectric interfaces.]],
   ),
   figure(
     image("figs/confined_sym.png", width: 440pt),
-    caption: [#text(15pt)[Contraction of ions in dielectrically confined 3:1 electrolyte systems with symmetric dielectric interfaces, (a) $gamma = -0.95$, (b) $gamma = 0.95$.]],
+    caption: [#text(15pt)[Concentration of ions in dielectrically confined 3:1 electrolyte systems with symmetric dielectric interfaces, (a) $gamma = -0.95$, (b) $gamma = 0.95$.]],
   ),
   300pt,
   400pt
@@ -735,7 +743,7 @@ The charged particles gather into checkerboard patterns, and the system exhibits
 
 = Summary and Outlook
 
-== Summary
+== Summary and outlook
 
 #timecounter(1)
 
@@ -748,7 +756,7 @@ During my PhD, I focused on confined quasi-2D charged systems, including:
 - Applications in MD simulations, including all-atom simulations of SPC/E water, and the observation of spontaneous symmetry broken solely via dielectric confinements for the first time.
 
 
-== Future works
+=== Future works
 #timecounter(1)
 
 - Extend our methods to more complex systems, including systems with complex geometries such as curved surfaces and polarizable particles.
@@ -757,7 +765,7 @@ During my PhD, I focused on confined quasi-2D charged systems, including:
 
 - Application to the simulation of real world systems, such as biomolecular systems and colloidal systems.
 
-== Publications
+== List of publications
 
 #text(16pt)[
 1. *X. Gao*, Z. Gan, and Y. Li, Efficient particle-based simulations of Coulomb systems under dielectric nanoconfinement, (2025), under preparation
@@ -799,7 +807,7 @@ During my PhD, I focused on confined quasi-2D charged systems, including:
 
 // - *OMEinsum.jl*#footnote(text(12pt)[#link("https://github.com/under-Peter/OMEinsum.jl")],) (185 stars) and its backend *OMEinsumContractionOrders.jl*#footnote(text(12pt)[#link("https://github.com/TensorBFS/OMEinsumContractionOrders.jl")],): Optimizing the tensor network contraction order and contracting the tensor network.
 
-= Acknowledgements
+// = Acknowledgements
 
 #pagebreak()
 
