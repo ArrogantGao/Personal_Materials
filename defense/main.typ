@@ -349,7 +349,7 @@ $N$ particles inhomogenous system $arrow$ $(2M + 1) N$ particles homogenous syst
 
 A combination of image charge method and EwaldELC method is called ICM-EwaldELC method, which is a standard technique for dielectrically confined systems.
 
-- *$L_z$*: thickness of the vacuum layer.
+- *$L_z$*: thickness of the padded 3D system.
 
 - *$M$*: number of layers of image charges.
 
@@ -458,7 +458,7 @@ $
 $
 
 *Step 2*:
-Select height of the vacuum layer $L_z$:
+Select height of the padded 3D system $L_z$:
 - Case 1: $abs(gamma_u gamma_d e^((4 pi H) / max(L_x, L_y))) < 1$
 $
   L_z >= H + (max(L_x, L_y) / (2 pi)) (log(1 / epsilon) + log(abs(gamma_u + gamma_d + e^(-2 pi H / max(L_x, L_y)))))
@@ -612,6 +612,7 @@ The SPC/E bulk water systems are simulated, where the system dimensions are set 
 
 - Mesh free, only use simple data structure.
 - Not sensitive to the aspect ratio of the system.
+- Reduce the ICM complexity from $O(M N)$ to $O(M + N)$.
 - Parallelizable and scalable.
 
 === Disadvantages
@@ -697,17 +698,9 @@ We applied the SOEwald2D method for the simulations of electrolytes in homogeneo
 
 We studied the electrolytes confined by slabs with different dielectric constants.
 
-#leftrightw1w2(
-  figure(
-    image("figs/confined_nonsym.png", width: 250pt),
-    caption: [#text(15pt)[Concentration of ions in dielectrically confined 1:1 electrolyte systems with non-symmetric dielectric interfaces.]],
-  ),
-  figure(
-    image("figs/confined_sym.png", width: 440pt),
-    caption: [#text(15pt)[Concentration of ions in dielectrically confined 3:1 electrolyte systems with symmetric dielectric interfaces, (a) $gamma = -0.95$, (b) $gamma = 0.95$.]],
-  ),
-  300pt,
-  400pt
+#figure(
+  image("figs/confined_sym.png", width: 650pt),
+  caption: [#text(15pt)[Concentration of ions in dielectrically confined 3:1 electrolyte systems with symmetric dielectric interfaces, (a) $gamma = -0.95$, (b) $gamma = 0.95$.]],
 )
 
 #pagebreak()
@@ -751,7 +744,7 @@ During my PhD, I focused on confined quasi-2D charged systems, including:
 
 - Theoretical analysis of Ewald summation for dielectric-confined planar systems.
 
-- Development of novel fast algorithms for simulating quasi-2D Coulomb systems, including both stochastic methods and spectral methods, for non-dielectrically confined systems, dielectrically confined systems, and negatively confined systems.
+- Development of novel fast algorithms for simulating quasi-2D Coulomb systems, for non-dielectrically confined systems, dielectrically confined systems, and negatively confined systems, which overcomes the difficulty of strongly confinement and polarization effects.
 
 - Applications in MD simulations, including all-atom simulations of SPC/E water, and the observation of spontaneous symmetry broken solely via dielectric confinements for the first time.
 
