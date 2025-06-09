@@ -29,3 +29,6 @@ docs/site/
 Manifest.toml
 
 job_talk/*.pdf
+*.synctex.gz
+*Notes.bib
+*.bbl

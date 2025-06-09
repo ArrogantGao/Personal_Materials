@@ -1,0 +1,107 @@
+% TeX'ing this file requires that you have AMS-LaTeX 2.0 installed
+% as well as the rest of the prerequisites for REVTeX 4.0
+%
+% See the REVTeX 4 README file
+% It also requires running BibTeX. The commands are as follows:
+%
+%  1)  latex apssamp.tex
+%  2)  bibtex apssamp
+%  3)  latex apssamp.tex
+%  4)  latex apssamp.tex
+%
+%\documentclass[prb,showkeys,preprintnumbers,amsmath,amssymb, 11pt]{revtex4}
+%\documentclass[preprint,showpacs,showkeys,preprintnumbers,amsmath,amssymb]{revtex4}
+
+% Some other (several out of many) possibilities
+%\documentclass[preprint,aps]{revtex4}
+%\documentclass[aps, two column, amsmath,amssymb,floatfix]{revtex4}
+%\documentclass[showkeys,showpacs,amsmath,amssymb,onecolumn,superscriptaddress,prl]{revtex4-1}% Physical Review B  
+\documentclass[aps,prl,reprint,showpacs,floatfix,superscriptaddress, onecolumn, 11pt]{revtex4-2}
+
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}% Align table columns on decimal point
+\usepackage{bm}% bold math
+\usepackage{color}
+\usepackage{epsfig}
+\usepackage{multirow}
+\usepackage{mathrsfs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{epstopdf}
+\usepackage{subfigure}
+\usepackage{autobreak}
+
+%Macros for mathematical notations
+
+\newcommand{\V}[1]{\boldsymbol{#1}} %# vector
+\newcommand{\M}[1]{\boldsymbol{#1}} %# matrix
+\newcommand{\Set}[1]{\mathbb{#1}} %# set
+\newcommand{\D}[1]{\Delta#1} %# \D{t} for time step size
+\renewcommand{\d}[1]{\delta#1} %# \d{t} for small increment
+\newcommand{\norm}[1]{\left\Vert #1\right\Vert } % norm
+\newcommand{\abs}[1]{\left|#1\right|} %abs
+
+\newcommand{\grad}{\M{\nabla}} %gradient
+\newcommand{\av}[1]{\left\langle #1\right\rangle } %take average
+
+\newcommand{\sM}[1]{\M{\mathcal{#1}}} %matrix in mathcal font
+\newcommand{\dprime}{\prime\prime} % double prime
+%\global\long\def\i{\iota}
+%\renewcommand{\i}{\iota} %i for imaginary unit
+%\renewcommand{\i}{\mathsf i} %i for imaginary unit
+\newcommand{\follows}{\quad\Rightarrow\quad} %=>
+\newcommand{\eqd}{\overset{d}{=}} %=^d
+\newcommand{\spe}[1]{\mathscr{#1}}  %important quantities in mathscr font
+\newcommand{\eps}{\epsilon}
+
+\newcommand{\ar}[1]{{\color{blue}{Authors' response: #1}}} % for authors' response
+\newcommand{\blue}[1]{{\color{blue}{#1}}} % for authors' Response
+\newcommand{\red}[1]{{\color{red}{#1}}} % for authors' Revised
+\newcommand{\xuanzhao}[1]{{\color{red}{XZ: #1}}} % for referee's comment
+\usepackage{xcolor}
+% Define deep green color using RGB
+\definecolor{deepgreen}{RGB}{0, 100, 0}
+\newcommand{\jiuyang}[1]{{\color{deepgreen}{JY: #1}}}
+
+\begin{document}
+\preprint{Preprint}
+
+\title{List of Publications}
+\author{Xuanzhao Gao}
+% \date{}
+
+\maketitle
+
+\textbf{Peer-reviewed Publications}
+
+\begin{enumerate}
+  \item \textbf{X. Gao}, Q. Zhou, Z. Gan, and J. Liang, Accurate error estimates and optimal parameter selection in Ewald summation for dielectrically confined Coulomb systems, \textit{Journal of Chemical Theory and Computation} (2025)
+  
+  \item (Alphabetical order) Z. Gan, \textbf{X. Gao}, J. Liang, and Z. Xu, Random batch Ewald method for dielectrically confined Coulomb systems, \textit{SIAM Journal on Scientific Computing} (2025) (In press, also available on Arxiv:2405.06333)
+  
+  \item \textbf{X. Gao}, X. Li, and J.-G. Liu, Programming guide for solving constraint satisfaction problems with tensor networks, \textit{Chinese Physics B} 34, 050201 (2025)
+  
+  \item (Alphabetical order) Z. Gan, \textbf{X. Gao}, J. Liang, and Z. Xu, Fast algorithm for quasi-2D Coulomb systems. \textit{Journal of Computational Physics} 113733, (2025)
+  
+  \item M. Roa-Villescas, \textbf{X. Gao}, S. Stuijk, H. Corporaal, and J.-G. Liu, Probabilistic inference in the era of tensor networks and differential programming, \textit{Physical Review Research} 6, 33261 (2024)
+  
+  \item \textbf{X. Gao} and Z. Gan, Broken symmetries in quasi-2D charged systems via negative dielectric confinement, \textit{The Journal of Chemical Physics} 161, (2024)
+\end{enumerate}
+
+\textbf{Manuscripts Under Review}
+
+\begin{enumerate}
+\item \textbf{X. Gao}, Y.-J. Wang, P. Zhang, and J.-G. Liu, Automated discovery of branching rules with optimal complexity for the maximum independent set problem, Arxiv:2412.07685 (2024)
+  
+\item (Alphabetical order) \textbf{X. Gao}, S. Jiang, J. Liang, Z. Xu, and Q. Zhou, A fast spectral sum-of-Gaussians method for electrostatic summation in quasi-2D systems, Arxiv:2412.04595 (2024)
+\end{enumerate}
+
+\textbf{In Draft (preprint available upon request)}
+
+\begin{enumerate}
+\item \textbf{X. Gao}, Z. Gan, and Y. Li, Efficient particle-based simulations of Coulomb systems under dielectric nanoconfinement
+\end{enumerate}
+
+
+\end{document}
