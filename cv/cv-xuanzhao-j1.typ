@@ -27,7 +27,7 @@ I have also concentrated on algorithms for combinatorial optimization problems.
 #section("Education")
 #education(
   institution: [Hong Kong University of Science and Technology],
-  major: [P.h.D. Majoring in Applied Mathematics, supervised by #link("https://zcgan.github.io/")[Prof. Zecheng Gan]],
+  major: [P.h.D. Majoring in Applied Mathematics, under the Individual Interdisciplinary Program (Advanced Materials) \ Supervised by #link("https://zcgan.github.io/")[Prof. Zecheng Gan]],
   date: "2021 -- now",
   location: "Hong Kong SAR, China",
 )
@@ -42,9 +42,9 @@ I have also concentrated on algorithms for combinatorial optimization problems.
 #sectionsep
 #section("Publications")
 
-@icm_error, accepted by Journal of Chemical Theory and Computation
+@gan2024random
 
-@gan2024random, accepted by SIAM Journal on Scientific Computing
+@icm_error
 
 @complexitypaper
 
@@ -63,14 +63,14 @@ I have also concentrated on algorithms for combinatorial optimization problems.
 #sectionsep
 #section("Presentations and Posters")
 #education(
-  institution: [SciCADE 2024],
+  institution: [SciCADE 2024, Singapore],
   major: [Fast Algorithm for Quasi-2D Coulomb Systems],
   date: "July 15-19, 2024",
   location: "Contributed Talk",
 )
 #sectionsep
 #education(
-  institution: [ICIAM 2023],
+  institution: [ICIAM 2023, Japan],
   major: [Random Batch Quasi-Ewald Method for the Simulations of Charged Particles under Dielectric Confinement],
   date: "August 20-25, 2023",
   location: "Poster",
@@ -82,11 +82,11 @@ I have also concentrated on algorithms for combinatorial optimization problems.
   title: [Programming Languages],
   content: [Julia (proficient), Python, C/C++],
 )
-#subsectionsep
-#oneline-title-item(
-  title: [Languages],
-  content: [Mandarin Chinese (native), English (proficient)],
-)
+// #subsectionsep
+// #oneline-title-item(
+//   title: [Languages],
+//   content: [Mandarin Chinese (native), English (proficient)],
+// )
 
 // Keep this at the end
 #show bibliography: none
