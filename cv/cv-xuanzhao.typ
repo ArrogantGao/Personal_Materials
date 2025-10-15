@@ -30,7 +30,7 @@ I am interested in applied and computational mathematics in general, working on 
 #section("Education")
 #education(
   institution: [Hong Kong University of Science and Technology],
-  major: [P.h.D. in Individual Interdisciplinary Program, major in Applied Mathematics. Thesis advisors: Zecheng Gan, Jinguo Liu, and Yang Xiang],
+  major: [Ph.D. in Individual Interdisciplinary Program, major in Applied Mathematics. Thesis advisors: Zecheng Gan, Jinguo Liu, and Yang Xiang],
   date: "2021 -- 2025",
   location: "Hong Kong SAR, China",
 )
