@@ -90,4 +90,4 @@ I have also concentrated on algorithms for combinatorial optimization problems.
 
 // Keep this at the end
 #show bibliography: none
-#bibliography("../my.bib", style: "american-physics-society")
+#bibliography("./my.bib")

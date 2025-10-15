@@ -6,45 +6,57 @@
   font-type: "PT Serif",
   continue-header: "false",
   name: [Xuanzhao Gao],
-  address: [Hong Kong University of Science and Technology, Hong Kong SAR, China],
+  address: [Center for Computational Mathematics, Flatiron Institute, New York, NY, USA],
   lastupdated: "true",
-  pagecount: "true",
-  date: [2025-04-07],
+  pagecount: "false",
+  date: [2025-10-15],
   contacts: (
-    (text: [xz.gao\@connect.ust.hk], link: "mailto:xz.gao@connect.ust.hk"),
+    (text: [xgao\@flatironinstitute.org], link: "mailto:xgao@flatironinstitute.org"),
     (text: [github.com/ArrogantGao], link: "https://github.com/ArrogantGao"),
     (text: [arrogantgao.github.io], link: "https://arrogantgao.github.io/")
   ),
 )
 
+#set par(justify: true)
 #show link: set text(blue)
 
 // about
+#section[Research Interests]
+I am interested in applied and computational mathematics in general, working on the following topics:
+- Boundary integral equations for complex geometries.
+- Fast summation algorithms for long-range interactions.
+- Tensor network-based algorithms for combinatorial optimization problems.
+#sectionsep
 #section("Education")
 #education(
   institution: [Hong Kong University of Science and Technology],
-  major: [P.h.D. in Individual Interdisciplinary Program, major in Applied Mathematics],
-  date: "2021 -- now",
+  major: [P.h.D. in Individual Interdisciplinary Program, major in Applied Mathematics. Thesis advisors: Zecheng Gan, Jinguo Liu, and Yang Xiang],
+  date: "2021 -- 2025",
   location: "Hong Kong SAR, China",
 )
-Advisor: #link("https://zcgan.github.io/")[Prof. Zecheng Gan]\; Co-advisor: #link("https://giggleliu.github.io/")[Prof. Jin-Guo Liu] & #link("https://www.math.hkust.edu.hk/people/faculty/profile/maxiang/")[Prof. Yang Xiang].
+// Advisor: #link("https://zcgan.github.io/")[Prof. Zecheng Gan]\; Co-advisor: #link("https://giggleliu.github.io/")[Prof. Jin-Guo Liu] & #link("https://www.math.hkust.edu.hk/people/faculty/profile/maxiang/")[Prof. Yang Xiang].
 #subsectionsep
 #education(
   institution: [The University of Science and Technology of China],
-  major: [B.S. in Condensed Matter Physics \& B.S. in Computer Science],
+  major: [B.S. in Condensed Matter Physics \& B.S. in Computer Science. Undergraduate thesis advisor: Xianhui Chen],
   date: "2017 -- 2021",
   location: "China",
 )
 #sectionsep
-#section[Research Interests]
-I am interested in computational mathematics and scientific computing in general, with a particular focus on developing efficient numerical algorithms for modeling and simulating complex systems, emphasizing high-performance implementation. 
-Specifically, I am engaged in research on fast summation algorithms tailored for long-range interactions. 
-I have also concentrated on tensor network-based algorithms for combinatorial optimization problems and their potential applications in simulating quantum many-body systems.
+#section("Positions")
+#job(
+  date: "2025 -- now",
+  position: [Flatiron Research Fellow],
+  institution: [Center for Computational Mathematics, Flatiron Institute, Simons Foundation, New York, NY, USA],
+)
+#subsectionsep
 #sectionsep
 #section("Publications")
 #subsection("Peer-reviewed Publications")
 
-@gan2024random, accepted by SIAM Journal on Scientific Computing
+@icm_error
+
+@gan2024random
 
 @complexitypaper
 
@@ -58,18 +70,17 @@ I have also concentrated on tensor network-based algorithms for combinatorial op
 #subsectionsep
 #subsection("Manuscripts Under Review")
 
-@icm_error
-
 @fssog
 
-@tensorbranching
+@optimalbranching
 
 #subsectionsep
+
 #subsection("In Draft (preprint available upon request)")
 
-@quasiewald
+// @tensorbranching
 
-#sectionsep
+@quasiewald
 
 #pagebreak()
 
@@ -103,6 +114,11 @@ I have also concentrated on tensor network-based algorithms for combinatorial op
   title: [#link("https://github.com/ArrogantGao/TreeWidthSolver.jl")[TreeWidthSolver.jl]],
   content: [A collection of tools for calculating the exact tree width and tree decomposition of a given graph.],
 )
+#subsectionsep
+#oneline-title-item(
+  title: [#link("https://github.com/OptimalBranching/OptimalBranching.jl")[OptimalBranching.jl]],
+  content: [A framework for automated discovery of optimal branching rules for the branch-and-bound algorithm.],
+)
 #sectionsep
 #section("Open Source Projects")
 
@@ -119,6 +135,14 @@ I have also concentrated on tensor network-based algorithms for combinatorial op
 )
 #sectionsep
 #section("Presentations and Posters")
+#education(
+  institution: [The 14th CSCM Annual Conference],
+  major: [A Fast Spectral Sum-of-Gaussians Method for Electrostatic Summation in Quasi-2D Systems],
+  date: "August 17-21, 2025",
+  location: "Invited Talk",
+)
+#subsectionsep
+#sectionsep
 #education(
   institution: [JuliaCN Meetup 2024],
   major: [#link("https://raw.githubusercontent.com/ArrogantGao/my_presentations/main/pre/treewidth.pdf")[TreeWidthSolver.jl: From Treewidth to Tensor Network Contraction Order]],
@@ -160,4 +184,4 @@ I have also concentrated on tensor network-based algorithms for combinatorial op
 
 // Keep this at the end
 #show bibliography: none
-#bibliography("../my.bib", style: "american-physics-society")
+#bibliography("my.bib", style: "american-physics-society")
