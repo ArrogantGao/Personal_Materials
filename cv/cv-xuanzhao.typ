@@ -12,8 +12,8 @@
   date: [2025-10-15],
   contacts: (
     (text: [xgao\@flatironinstitute.org], link: "mailto:xgao@flatironinstitute.org"),
-    (text: [github.com/ArrogantGao], link: "https://github.com/ArrogantGao"),
-    (text: [arrogantgao.github.io], link: "https://arrogantgao.github.io/")
+    // (text: [github.com/ArrogantGao], link: "https://github.com/ArrogantGao"),
+    (text: [users.flatironinstitute.org/\~xgao1], link: "https://users.flatironinstitute.org/~xgao1/")
   ),
 )
 
