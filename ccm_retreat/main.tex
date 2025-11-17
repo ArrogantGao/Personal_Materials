@@ -1,0 +1,103 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{bookmark}
+\usepackage{svg}
+\title{Lightning Talk}
+\date{November 17, 2025}
+\author{\textbf{Xuanzhao Gao}}
+% \institute{\inst{1} Center for Your Center, Flatiron Institute, Simons Foundation \and \inst{2} Other Author's Institute}
+
+\usetheme{CCM}
+
+\begin{document}
+
+\begin{frame}
+	\titlepage
+\end{frame}
+
+\begin{frame}
+	\frametitle{Hi!}
+	I'am Xuanzhao Gao, a new FRF working with Alex and Jason.
+	
+	\vspace{0.3cm}
+
+	I'm from Changchun, a snowy city in China.
+
+	\begin{figure}[h]
+		\begin{columns}[T]
+			\begin{column}{0.3\textwidth}
+				\centering
+				\includegraphics[width=\linewidth]{figs/changchun.jpg}
+			\end{column}
+			\begin{column}{0.4\textwidth}
+				\centering
+				\includegraphics[width=\linewidth]{figs/changchun_2.jpg}
+			\end{column}
+		\end{columns}
+	\end{figure}
+
+	My education background is quite complex :-)
+	\begin{itemize}
+		\item Phd in Hong Kong University of Science and Technology, applied mathematics
+		\item BSc in University of Science and Technology of China, physics and computer science
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Boundary Integral Equations}
+
+	I am working with Alex and Jason on a project about solving Poisson's equation under dielectric mismatches and corner singularities.
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.25\textwidth]{figs/mbox_toy.png}
+	\end{figure}
+
+	We are doing a great job on 2D cases by adaptive refinement of the corners:
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.7\textwidth]{figs/mbox_fmm2d_2.png}
+	\end{figure}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{Fast Summation Methods}
+
+	I am working on fast summation methods for the $1/r$ kernel.
+
+	Now I am collaborating with Shidong and Jiuyang for a DMK based solver to achieve $O(\log{N})$ update complexity in Monte Carlo simulations of charged particles.
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.5\textwidth]{figs/pdmk4mc_runtime.png}
+	\end{figure}
+
+\end{frame}
+
+\begin{frame}
+	\frametitle{Tensor Network Algorithms}
+
+	Another direction I am interested in the tensor network algorithms, which is kind of mixture of math, quantum physics and computer science.
+
+	Now I use it to solve combinatorial optimization problems.
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.9\textwidth]{figs/bbtn_time_complexity.pdf}
+	\end{figure}
+
+	I am also trying to develop methods for quantum many-body simulations.
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{I Code in Julia and Cpp}
+
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=\textwidth]{figs/github.png}
+	\end{figure}
+\end{frame}
+
+\end{document}
